@@ -354,12 +354,13 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	Window_Message.prototype.newPage = function(textState) {
 		chimaki_plugin.menucattext.alias._windowmsg_center.call(this, textState);
 	    if (this.isNeedCenter()) {
-	    	textState.x += (this.width / 2) - (this.textWidth(this._textState.text) / 2 );
+	    	textState.x = 0;
+	    	textState.x = (this.x / 2 + this.width / 2) - (this.textWidth(this._textState.text) / 2) - this.standardPadding();
 	    	isNeedToCenter = false;	
 	    }
 	    if (this.isNeedHCenter()) {
 			this._textState.text = this.convertEscapeCharacters($gameMessage.allText(), true)	    	
-	    	textState.y = (this.height / 2) - (this._textState.height / 2) -  this._textState.height / 2 ;
+	    	textState.y = (this.height / 2) - (this._textState.height / 2) -  this._textState.height / 2  ;
 	    	isNeedToHCenter = false;   	
 	    }	
 
@@ -367,6 +368,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	};
 	Window_Message.prototype.newLineX = function() {
 	    return $gameMessage.faceName() === '' ? 0 : 168;
+	    // return 0;
 	};	
 	Window_Message.prototype.createBackg = function (){
 		this._back = new Sprite();
@@ -2330,20 +2332,11 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	    SceneManager.push(Scene_Options);
 	};
 
+
+	window.Scene_CatGakuen = Scene_CatGakuen;
+	window.Scene_CatItem = Scene_CatItem;
+
 }());
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
