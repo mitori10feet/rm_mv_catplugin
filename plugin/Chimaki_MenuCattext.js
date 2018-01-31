@@ -195,6 +195,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	chimaki_plugin.args.miniMenuY= Math.floor(chimaki_plugin.menucattext._arsg['MiniMenuY']|| 0);
 	chimaki_plugin.args.miniMenuWidth = 150;
 	chimaki_plugin.args.miniMenuHeight = 50;
+	chimaki_plugin.args.choicesMessageOffice = 50;
 
 	//  pro for sprite button at touch input
 	chimaki_plugin.args.miniRectangle = new Rectangle();
@@ -210,6 +211,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	let msg_window_offsetY = 30;
 	let fullScreenW = 1280;
 	let fullScreenH = 720;
+
 
 	// 全頻文字
 	let fullScreenMode = false;
@@ -1910,7 +1912,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		return (Graphics.height / 2) - (this.windowHeight /2);
 	}
 	Window_ChoiceList.prototype.windowWidth = function (){
-		return Graphics.boxWidth + 100;	
+		return Graphics.boxWidth + chimaki_plugin.args.choicesMessageOffice * 2;	
 	}
 	Window_ChoiceList.prototype.updatePlacement = function() {		
 	    var positionType = $gameMessage.choicePositionType();
@@ -1923,10 +1925,10 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	        this.x = 0;
 	        break;
 	    case 1:
-	        this.x = (Graphics.boxWidth - this.width) / 2;
+	        this.x = (this.windowWidth() - this.width) / 2  - chimaki_plugin.args.choicesMessageOffice;
 	        break;
 	    case 2:
-	        this.x = Graphics.boxWidth - this.width;
+	        this.x = (this.windowWidth() - this.width) /2 - chimaki_plugin.args.choicesMessageOffice;
 	        break;
 	    }
 	    if (messageY >= Graphics.boxHeight / 2) {
@@ -1960,7 +1962,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 
 	    var rect = this.itemRectForText(index);
 	    var w  = this.contents.measureTextWidth(this.commandName(index));
-	    this.drawTextEx(this.commandName(index), (rect.width / 2) - (w /2), rect.y , 1000 , 'left');
+	    this.drawTextEx(this.commandName(index), Graphics._boxWidth / 2 - w / 2  + chimaki_plugin.args.choicesMessageOffice - this.standardPadding() , rect.y , this.windowWidth() , 'left');
 	};
 
 //=============================================================================
@@ -2337,6 +2339,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	window.Scene_CatItem = Scene_CatItem;
 
 }());
+
 
 
 
