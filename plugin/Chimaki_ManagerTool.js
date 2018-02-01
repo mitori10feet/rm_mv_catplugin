@@ -12,7 +12,7 @@
 * 
 * @param opctionString
 * @desc opction 名稱調整
-* @default Always Dash;Command Remember;BGM Volume;BGS Volume;ME Volume;SE Volume;CV Volume;Language
+* @default Always Dash;Command Remember;BGM Volume;BGS Volume;ME Volume;SE Volume;CV Volume;Language;Quit Game
 * 
 * @param setlan
 * @desc 繁體 / 簡體 / 日文 / 英文 0 = 關閉 , 1 = 開啟(分號隔開, 繁體必須是1)
@@ -44,17 +44,18 @@ var chimaki_parameters = PluginManager.parameters('Chimaki_ManagerTool');
 
 var setlan = chimaki_parameters["setlan"].split(";") ;
 var logSwitch = Math.floor(chimaki_parameters["logSwitch"]);
-
+var whatthefuck = "Title";
 
 AudioManager._cvVolume       = 100;
 ConfigManager.language   = 0;
+ConfigManager.title = "title";
 
 
 
 function log (str){	
-	if (logSwitch){
-		console.log(str);	
-	}
+	// if (logSwitch){
+		// console.log(str);	
+	// }
 	
 }
 
@@ -135,6 +136,7 @@ ConfigManager.makeData = function() {
     config.seVolume = this.seVolume;
     config.cvVolume = this.cvVolume;
     config.makeData = this._madeData;
+    config.title = "Title";
 
     return config;
 };
@@ -155,6 +157,7 @@ ConfigManager.applyData = function(config) {
     this.seVolume = this.readVolume(config, 'seVolume');
 
     this.cvVolume = this.readVolume(config, 'cvVolume');
+    this.bitString = "Title";
 
     TextContentManager.setContentData(languageConfig[this.language]);
 
@@ -196,6 +199,7 @@ ConfigManager.readVolume = function(config, name) {
 	var seString = opctionStrings[5];
 	var CVString = 	opctionStrings[6];
 	var languageString = 	opctionStrings[7];
+	var BTString = 	opctionStrings[8];		
 
 
 //=============================================================================
@@ -224,6 +228,10 @@ ConfigManager.readVolume = function(config, name) {
 		var path = 'img/Rabbitsurviva/';
  	   	return this.loadBitmap(path, filename, hue, true);
 	};
+	ImageManager.loadRabbitsurvivalCharacter = function(filename, hue) {
+		var path = 'img/Rabbitsurviva/Character/';
+ 	   	return this.loadBitmap(path, filename, hue, true);
+	};	
 
 	ImageManager.loadHamsterspace = function(filename, hue) {
 		var path = 'img/Hamsterspace/';
@@ -300,12 +308,16 @@ ConfigManager.readVolume = function(config, name) {
 	    if (!$gameSwitches.value(cvswitch)){
 	    	this.addCommand(CVString, 'cvVolume');	
 	    }
+	    this.addCommand(BTString, 'title');		    
 	    
 	};	
 
 	Window_Options.prototype.statusText = function(index) {
 	    var symbol = this.commandSymbol(index);	    
 	    var value = this.getConfigValue(symbol);
+	    if (this.isBackToTitle(symbol)){
+	    	return whatthefuck;
+	    }
 	    if (this.isVolumeSymbol(symbol)) {
 	        return this.volumeStatusText(value);	    
 	    } else if (this.isLanguageSymbol(symbol)){
@@ -317,7 +329,9 @@ ConfigManager.readVolume = function(config, name) {
 	        return this.booleanStatusText(value);
 	    }
 	};
-
+	Window_Options.prototype.isBackToTitle = function(symbol) {
+	    return symbol.contains('title');
+	};
 	Window_Options.prototype.isLanguageSymbol = function(symbol) {
 	    return symbol.contains('lang');
 	};
@@ -332,6 +346,10 @@ ConfigManager.readVolume = function(config, name) {
 	    var index = this.index();
 	    var symbol = this.commandSymbol(index);
 	    var value = this.getConfigValue(symbol);
+	    // 回到開頭
+	    if (this.isBackToTitle(symbol)){
+	    	return SceneManager.push(Scene_CatEnd);
+	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
 	        value += this.volumeOffset();
 	        if (value > 100) {
@@ -367,6 +385,9 @@ ConfigManager.readVolume = function(config, name) {
 	    var index = this.index();
 	    var symbol = this.commandSymbol(index);
 	    var value = this.getConfigValue(symbol);
+	    if (this.isBackToTitle(symbol)){
+	    	return whatthefuck;
+	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
 	        value -= this.volumeOffset();
 	        value = value.clamp(0, 100);
@@ -383,6 +404,9 @@ ConfigManager.readVolume = function(config, name) {
 	    var index = this.index();
 	    var symbol = this.commandSymbol(index);
 	    var value = this.getConfigValue(symbol);
+	    if (this.isBackToTitle(symbol)){
+	    	return whatthefuck;
+	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
 	        value += this.volumeOffset();
 	        value = value.clamp(0, 100);
@@ -415,6 +439,8 @@ ConfigManager.readVolume = function(config, name) {
 	ConfigManager.readFlag = function(config, name) {
 	    return !!config[name];
 	};
+
+
 
 }());
 
@@ -492,6 +518,9 @@ function initDataContent  (){
 	});		
 	
 }
+
+
+
 
 Scene_Boot.prototype.isGameFontLoaded = function() {
     if (Graphics.isFontLoaded('GameFont')) {

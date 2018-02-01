@@ -2334,9 +2334,69 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	    SceneManager.push(Scene_Options);
 	};
 
+	class Scene_CatEnd extends Scene_Options {
+		constructor (){
+			super();
+		}
+		initialize (){
+			Scene_Options.prototype.initialize.call(this);
+		}
+		create () {
+	    	Scene_MenuBase.prototype.create.call(this);
+	    
+			this.createBackgroundSprite();
+			this.createMeuBox()
+
+			this.createSystemButton();
+			this.createBackButton();	    
+			this.createBackTitleWindow();			
+			this.createTouchSprite();
+	    
+		};
+		createBackTitleWindow (){
+		    this._commandWindow = new Window_CatEnd();
+		    this._commandWindow.setHandler('toTitle',  this.commandToTitle.bind(this));
+		    this.addChild(this._commandWindow);			
+		}
+
+		commandToTitle (){
+		    this.fadeOutAll();
+		    SceneManager.goto(Scene_Title);			
+		}
+	}
+
+	class Window_CatEnd extends Window_GameEnd{
+		constructor (){
+			super();
+		}
+		initialize (){
+			Window_GameEnd.prototype.initialize.call(this);
+			this.windowskin = ImageManager.loadSystem('Window_Noframe');
+			this.opacity = 0;
+		}
+		updatePlacement () {
+		    this.x = -25 ;
+    		this.y = (Graphics.boxHeight - this.height) / 2;
+		};
+		windowWidth () {
+		    return Graphics.boxWidth + 50;
+		};		
+		makeCommandList () {
+		    this.addCommand('Back to title', 'toTitle');
+		};		
+		drawItem (index) {
+		    var rect = this.itemRectForText(index);
+		    var align = this.itemTextAlign();
+		    this.resetTextColor();
+		    this.changePaintOpacity(this.isCommandEnabled(index));
+		    this.drawText(this.commandName(index), rect.x, rect.y, rect.width, 'center');
+		};
+
+	}
 
 	window.Scene_CatGakuen = Scene_CatGakuen;
 	window.Scene_CatItem = Scene_CatItem;
+	window.Scene_CatEnd = Scene_CatEnd;
 
 }());
 
