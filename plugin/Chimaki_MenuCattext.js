@@ -2363,6 +2363,17 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		    this.fadeOutAll();
 		    SceneManager.goto(Scene_Title);			
 		}
+		onCancel (){
+			SoundManager.playCancel();			
+			SceneManager.pop();
+		}
+		update (){
+			Scene_Options.prototype.update.call(this);			
+			if (TouchInput.isCancelled() || Input.isTriggered('escape') || Input.isTriggered('cancel')){
+				this.onCancel();
+			}
+		}
+
 	}
 
 	class Window_CatEnd extends Window_GameEnd{
