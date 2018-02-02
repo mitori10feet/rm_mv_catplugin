@@ -2360,6 +2360,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		}
 
 		commandToTitle (){
+
 		    this.fadeOutAll();
 		    SceneManager.goto(Scene_Title);			
 		}
@@ -2370,6 +2371,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		update (){
 			Scene_Options.prototype.update.call(this);			
 			if (TouchInput.isCancelled() || Input.isTriggered('escape') || Input.isTriggered('cancel')){
+				this._sprite_backbutton.bitmap = this._sprite_backbutton.temp;	
 				this.onCancel();
 			}
 		}
@@ -2393,7 +2395,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		    return Graphics.boxWidth + 50;
 		};		
 		makeCommandList () {
-		    this.addCommand('Back to title', 'toTitle');
+		    this.addCommand(BtTString, 'toTitle');
 		};		
 		drawItem (index) {
 		    var rect = this.itemRectForText(index);

@@ -12,11 +12,11 @@
 * 
 * @param opctionString
 * @desc opction 名稱調整
-* @default Always Dash;Command Remember;BGM Volume;BGS Volume;ME Volume;SE Volume;CV Volume;Language;Quit Game
+* @default Always Dash;Command Remember;BGM Volume;BGS Volume;ME Volume;SE Volume;CV Volume;Language;Quit Game;Title;Back to title
 * 
 * @param setlan
 * @desc 繁體 / 簡體 / 日文 / 英文 0 = 關閉 , 1 = 開啟(分號隔開, 繁體必須是1)
-* @default 1;0;0;1
+* @default 1;0;0;0
 *
 * @param languageColor
 * @desc 依照 繁體/ 簡體 / 日本 / 英文，設定 1則顯示紅色
@@ -184,22 +184,24 @@ ConfigManager.readVolume = function(config, name) {
 	    }		
 	}
 };
-
+var cvswitch = Math.floor(chimaki_parameters['CVSwitche']|| 95);
+var opctionStrings  = chimaki_parameters["opctionString"].split(";") ;
+var languageColor = chimaki_parameters["languageColor"].split(";") ;
+var dashString = opctionStrings[0];
+var rememberString = opctionStrings[1];
+var bgmString = opctionStrings[2];
+var bgsString = opctionStrings[3];
+var meString = opctionStrings[4];
+var seString = opctionStrings[5];
+var CVString = 	opctionStrings[6];
+var languageString = 	opctionStrings[7];
+var BTString = 	opctionStrings[8];		
+var titleString = 	opctionStrings[9];			
+var BtTString = 	opctionStrings[10];	
 (function(){
 	
 	
-	var cvswitch = Math.floor(chimaki_parameters['CVSwitche']|| 95);
-	var opctionStrings  = chimaki_parameters["opctionString"].split(";") ;
-	var languageColor = chimaki_parameters["languageColor"].split(";") ;
-	var dashString = opctionStrings[0];
-	var rememberString = opctionStrings[1];
-	var bgmString = opctionStrings[2];
-	var bgsString = opctionStrings[3];
-	var meString = opctionStrings[4];
-	var seString = opctionStrings[5];
-	var CVString = 	opctionStrings[6];
-	var languageString = 	opctionStrings[7];
-	var BTString = 	opctionStrings[8];		
+
 
 
 //=============================================================================
@@ -316,7 +318,7 @@ ConfigManager.readVolume = function(config, name) {
 	    var symbol = this.commandSymbol(index);	    
 	    var value = this.getConfigValue(symbol);
 	    if (this.isBackToTitle(symbol)){
-	    	return whatthefuck;
+	    	return titleString;
 	    }
 	    if (this.isVolumeSymbol(symbol)) {
 	        return this.volumeStatusText(value);	    
@@ -348,6 +350,7 @@ ConfigManager.readVolume = function(config, name) {
 	    var value = this.getConfigValue(symbol);
 	    // 回到開頭
 	    if (this.isBackToTitle(symbol)){
+	    	SoundManager.playOk();
 	    	return SceneManager.push(Scene_CatEnd);
 	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
@@ -386,7 +389,7 @@ ConfigManager.readVolume = function(config, name) {
 	    var symbol = this.commandSymbol(index);
 	    var value = this.getConfigValue(symbol);
 	    if (this.isBackToTitle(symbol)){
-	    	return whatthefuck;
+	    	return titleString;
 	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
 	        value -= this.volumeOffset();
@@ -405,7 +408,7 @@ ConfigManager.readVolume = function(config, name) {
 	    var symbol = this.commandSymbol(index);
 	    var value = this.getConfigValue(symbol);
 	    if (this.isBackToTitle(symbol)){
-	    	return whatthefuck;
+	    	return titleString;
 	    }	    
 	    if (this.isVolumeSymbol(symbol)) {
 	        value += this.volumeOffset();
