@@ -135,6 +135,9 @@ chimaki_plugin.menucattext._lastIndexOf = document.currentScript.src.lastIndexOf
 chimaki_plugin.menucattext._indexOf            = document.currentScript.src.indexOf( '.js' );
 chimaki_plugin.menucattext._getJSName          = document.currentScript.src.substring( chimaki_plugin.menucattext._lastIndexOf + 1, chimaki_plugin.menucattext._indexOf );
 
+
+
+
 (function(){
 
 
@@ -290,7 +293,6 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	Game_Interpreter.prototype.setupChoices = function(params) {	   
 	    var choices = params[0].clone();
 	    for (let i = 0; i < choices.length; i++){
-	    	log(choices[i]);
 	    	choices[i] = this.checkTextByData(choices[i]);
 	    } 
 	    var cancelType = params[1];
@@ -410,8 +412,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	};
 
 	Window_Message.prototype.startMessage = function() {
-		log('start')
-		log($gameMessage.allText());
+
 	    this._textState = {};
 	    this._textState.index = 0;
 	    this._textState.text = this.convertEscapeCharacters($gameMessage.allText());
@@ -509,8 +510,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			return this._openness <= 0;		
 	};	
 	Window_Message.prototype.checkScreenMode = function (){
-		log('command mode')
-		log(fullScreenMode);
+
 	   	if (this._lastScreenMode === true){
 	   		this._back.visible = true;
 	   		this.opacity = 0;
@@ -623,7 +623,11 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			this.createSystemButton();
 			this.createBackButton();
 			this.createTouchSprite();
-		}				
+		}	
+		createStatusWindow () {
+    		this._statusWindow = new Window_CatMenuStatus(this._commandWindow.width, 0);
+    		this.addWindow(this._statusWindow);
+		};					
 		createBackgroundSprite (){
 			this._blackSprite = new Sprite();
 			this._blackSprite.bitmap = new Bitmap(chimaki_plugin.args.screenWidth,chimaki_plugin.args.screenHeight);		
@@ -771,7 +775,6 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		// hendler 系列
 		//=============================================================================
 		commandBox (){
-			log('sssss');
 			SoundManager.playOk();
 			this._commandWindow.select(0);
 			SceneManager.push(Scene_CatItem);
@@ -878,8 +881,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			}
 		}
 		setButtPosition (){
-			log('setButtPosition');
-			log(this.x);
+
 			let temp_w = 80;
 			let lenght = this.maxCols() + 1;
 			let width = (this.windowWidth() / lenght);
@@ -1166,7 +1168,6 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 
 	}
 	Scene_Load.prototype.setIsLoadGame = function (){
-		log('set is load game')
 		$gameVariables.setValue(chimaki_plugin.args.systemVar_load, 1);
 	}
 //=============================================================================
@@ -1301,6 +1302,14 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		}
 		initialize (){
 			Scene_ItemBase.prototype.initialize.call(this);	
+
+			for (let i = 0; i < $gameParty.members().length ; i++){
+				let face = $gameParty.members()[i]._faceName;
+				if (face){
+					ImageManager.loadFace(face)	;
+				}
+				
+			}			
 		}
 		create (){
 
@@ -1312,11 +1321,17 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			this.createHelpWindow();
 			this.createSystemButton();
 			this.createBackButton();
+
 			this.createItemWindow();
+			this.createActorWindow()
 			this._itemWindow.setHelpWindow(this._helpWindow);
 			this.createTouchSprite();
 				
 		}
+		update () {
+		    Scene_ItemBase.prototype.update.call(this);
+		};
+
 		createBackgroundSprite (){
 			this._blackSprite = new Sprite();
 			this._blackSprite.bitmap = new Bitmap(chimaki_plugin.args.screenWidth,chimaki_plugin.args.screenHeight);		
@@ -1342,7 +1357,15 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			this._sprite_box.x = chimaki_plugin.args.menu_sprite_system_pos_x;
 			this._sprite_box.y = chimaki_plugin.args.menu_sprite_system_pos_y;
 			this.addChild(this._sprite_box);			
-		}		
+		}	
+		createActorWindow (){
+
+		    this._actorWindow = new Window_CatMenuActor();
+		    this._actorWindow.setHandler('ok',     this.onActorOk.bind(this));
+		    this._actorWindow.setHandler('cancel', this.onActorCancel.bind(this));
+		    this._actorWindow.hide();
+		    this.addChild(this._actorWindow);			
+		}	
 		createBackButton(){
 
 			this._sprite_backbutton = new Sprite_Button();
@@ -1359,6 +1382,34 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			this._sprite_backbutton.bitmap = this._sprite_backbutton.temp;
 			SceneManager.pop();
 		}
+		determineItem (){
+		    var action = new Game_Action(this.user());
+		    var item = this.item();
+		    action.setItemObject(item);
+		    if (action.isForFriend()) {
+		        this.showSubWindow(this._actorWindow);
+		        this._actorWindow.selectForItem(this.item());
+		    } else {    	
+		        this.useItem();
+		        this.activateItemWindow();
+		    }			
+		}
+		showSubWindow (window){
+		    window.show();
+		    window.activate();			
+		}
+		onActorCancel () {
+		    this.hideSubWindow(this._actorWindow);
+		    this._itemWindow.show();
+		};
+
+		onItemOk () {
+			
+			
+			this._itemWindow.hide();
+		    $gameParty.setLastItem(this.item());
+		    this.determineItem();
+		};
 
 		createItemWindow (){
 		    this._itemWindow = new Window_CatItemList( 30, 142, Graphics.boxWidth - 59, Graphics.boxHeight - 286);
@@ -1372,7 +1423,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		   	this._itemWindow.addChildToBack(this._backgroundSprite);
 		   	
 		   	this._itemWindow.activate();		   
-		    this.addWindow(this._itemWindow);
+		    this.addChild(this._itemWindow);
 		    
 		}
 		createHelpWindow (){
@@ -1396,10 +1447,22 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		    this.applyItem();
 		    this.checkCommonEvent();
 		    this.checkGameover();
-	    
+		    this._actorWindow.refresh();
+
+		    if ($gameParty.numItems(this.item()) <= 0){
+		    	this.onActorCancel();
+		    }
 		};
-
-
+		canUse () {
+		    return this.user().canUse(this.item()) && this.isItemEffectsValid();
+		};
+		onActorOk () {
+		    if (this.canUse()) {
+		        this.useItem();
+		    } else {
+		        SoundManager.playBuzzer();
+		    }
+		};
 	}
 //=============================================================================
 // cat window 
@@ -2060,7 +2123,6 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		let index = $gameMap._interpreter._index - 1;
 		if (index < 0) index = 0;
 		if (this.isInterpreterNeedBack($gameMap._interpreter, index)){
-			log('into do interpreter back')
 			for (let i = 0; i < 5; i++){
 				if ($gameMap._interpreter._list[index - i].code == 101){
 					$gameMap._interpreter._index = index - i ;
@@ -2075,7 +2137,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 			if (childIndex) childIndex = 0;
 
 			if (this.isInterpreterNeedBack($gameMap._interpreter._childInterpreter, childIndex)){
-				log('into do interpreter child back')
+
 				for (var i = 0; i < 5; i++){
 					if ($gameMap._interpreter._childInterpreter._list[childIndex - i].code == 101){
 						$gameMap._interpreter._childInterpreter._index = childIndex - i  ;			
@@ -2107,7 +2169,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		return (interpreter != null && interpreter._list != null && interpreter._list[index].code == 102);
 	}
 	Scene_Map.prototype.setGameInterpreter = function (){
-		log('進入儲存')
+
 		$gameMap._interpreter = $gameVariables.value(chimaki_plugin.args.systemVar);
 	}
 	Scene_Map.prototype.setCatCallMenu = function (){
@@ -2124,8 +2186,7 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 	}
 	Scene_Map.prototype.setGameInterpreter = function (){
 		$gameVariables.setValue(chimaki_plugin.args.systemVar, $gameMap._interpreter);
-		log('save game interpreter');
-		log($gameVariables.value(chimaki_plugin.args.systemVar));	
+	
 	}
 	Scene_Map.prototype.updateMiniMenu = function (){
 		if (this._lastMini_menu != this.miniMenuSwitch()){
@@ -2377,6 +2438,624 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		}
 
 	}
+	class Window_CatMenuStatus extends Window_MenuStatus{
+		constructor (x,y){
+			super(x, y);
+		}
+		initialize (){		
+			Window_MenuStatus.prototype.initialize.call(this, x ,y );
+			this.width = this.windowWidth();
+			this.height = this.windowHeight();
+			this.x = this.windowX();
+			this.y = this.windowY();			
+			this.refresh();
+		}
+
+
+		windowX (){
+			return Graphics.boxWidth /2 -this.windowWidth() / 2;
+		}
+		windowY (){
+			return Graphics.boxHeight /2 -this.windowHeight() / 2;
+		}
+		windowHeight (){
+			return 200;
+		}
+		windowWidth (){
+			return 1210;
+		}		
+		numVisibleRows (){
+			return 1;
+		}
+		itemHeight (){
+			return this.windowHeight();
+		}		
+	}
+
+	const actor_x = 220
+	class Window_CatMenuActor extends Window_MenuActor{
+		constructor (x, y){
+			super(0, 0);
+		}
+		initialize (){
+			Window_MenuActor.prototype.initialize.call(this,0, 0);
+			this.show();
+			this.windowskin = ImageManager.loadSystem('Window_Noframe');
+			this.opacity = 0;			
+			this.width = this.windowWidth();
+			this.height = this.windowHeight();
+			this.x = this.windowX();
+			this.y = this.windowY();			
+
+		}
+
+		drawItemImage (index){
+			Window_CatMenuStatus.prototype.drawItemImage.call(this, index);
+		}
+
+		drawActorSimpleStatus (actor, x, y, width) {
+		    var lineHeight = this.lineHeight();
+		    var x2 = x + 180;
+		    var width2 = Math.min(200, width - 180 - this.textPadding());
+		    this.drawActorName(actor, x, y);
+		    this.drawActorClass(actor, x, y + lineHeight * 1.2);
+		    this.drawActorLevel(actor, x, y + lineHeight * 2.4);
+
+
+		    
+		    this.drawActorHp(actor, x2, y + lineHeight * 0, width2);
+		    this.drawActorMp(actor, x2, y + lineHeight * 1.8, width2);
+		    let x3 = x2 + width2 + 10;
+		    this.drawActorIcons(actor, x3, y + lineHeight * 0);		    
+		};
+		drawActorIcons (actor, x, y, width) {
+		    width = width || 144;
+		    var icons = actor.allIcons().slice(0, Math.floor(width / Window_Base._iconWidth));
+		    for (var i = 0; i < icons.length; i++) {
+		        this.drawIcon(icons[i], x , y + Window_Base._iconWidth * i + 1);
+		    }
+		};
+
+		drawActorHp (actor, x, y, width) {
+		    width = width || 186;
+		    var color1 = this.hpGaugeColor1();
+		    var color2 = this.hpGaugeColor2();
+		    this.drawGauge(x, y, width, actor.hpRate(), color1, color2);
+		    this.changeTextColor(this.systemColor());
+		    this.drawText(TextManager.hpA, x, y, 44);
+		    this.drawCurrentAndMax(actor.hp, actor.mhp, x, y, width,
+		                           this.hpColor(actor), this.normalColor());
+		};
+		drawGauge (x, y, width, rate, color1, color2) {
+		    var fillW = Math.floor(width * rate);
+		    var gaugeY = y + this.lineHeight() - 8;
+		    this.contents.fillRect(x, gaugeY, width, 24, this.gaugeBackColor());
+		    this.contents.gradientFillRect(x, gaugeY, fillW, 24, color1, color2);
+		};
+
+		drawActorClass (actor, x, y, width) {
+		    width = width || 168;
+		    this.resetTextColor();
+		    this.drawText(actor.currentClass().name, x, y, width);
+		};		
+		drawItemStatus (index) {
+		    var actor = $gameParty.members()[index];
+		    var rect = this.itemRect(index);
+		    var x = this.windowXSp(rect.width) + 162;
+		    var y = rect.y + rect.height / 2 - this.lineHeight() * 1.5;
+		    var width = rect.width - x - this.textPadding();
+    		this.drawActorSimpleStatus(actor, x, y + 10, width);
+		};		
+		windowXSp (width){
+			return Graphics.boxWidth / 2 - width /2 + actor_x;
+		}
+		drawItemImage (index){
+
+		    let actor = $gameParty.members()[index];
+		    var rect = this.itemRect(index);
+		    rect.x = this.windowXSp(rect.width);
+
+		    this.changePaintOpacity(actor.isBattleMember());
+		    this.drawActorFace(actor, rect.x + 1, rect.y + 11, Window_Base._faceWidth, Window_Base._faceHeight);
+		    this.changePaintOpacity(true);
+		}	
+		windowX (){
+			return Graphics.boxWidth /2 -this.windowWidth() / 2;
+		}
+		windowY (){
+			return Graphics.boxHeight /2 -this.windowHeight() / 2;
+		}
+		windowHeight (){
+			return 200;
+		}
+		windowWidth (){
+			return Graphics.boxWidth;
+		}		
+		numVisibleRows (){
+			return 1;
+		}
+	}
+
+
+	class Window_CatMenuActorSkill extends Window_Base {
+		constructor (x, y){
+			super(0, 0);
+		}
+		initialize (){
+
+			Window_Base.prototype.initialize.call(this,0, 0);
+			this.windowskin = ImageManager.loadSystem('Window_Noframe');
+			this.opacity = 0;			
+			this.y = this.windowY()
+			this.x = this.windowX();
+			this.width = this.windowWidth();
+			this.height = this.windowHeight();		
+			this._actor = $gameParty.members()[0];	
+		}
+		windowX (){
+			return Graphics.boxWidth /2 -this.windowWidth() / 2;
+		}
+		windowY (){
+			return 133;
+		}
+		windowHeight (){
+			return 165;
+		}
+		windowWidth (){
+			return 1220;
+		}			
+		// windowHeight (){
+		// 	return 200;
+		// }
+		setActor (actor) {
+		    if (this._actor !== actor) {
+		        this._actor = actor;
+		        this.refresh();
+		    }
+		};
+		refresh (){
+			this.contents.clear();
+			this.drawItemStatus(0);
+
+		}
+
+	
+		lineHeight (){
+			return 36;
+		}
+		drawActorSimpleStatus (actor, x, y, width) {
+		    var lineHeight = this.lineHeight();
+		    var x2 = x + 180;
+		    var width2 = Math.min(200, width - 180 - this.textPadding());
+		    this.drawActorName(actor, x, y);
+		    this.drawActorClass(actor, x, y + lineHeight * 1.2);
+		    this.drawActorLevel(actor, x, y + lineHeight * 2.4);
+
+
+		    
+		    this.drawActorHp(actor, x2, y + lineHeight * 0, width2);
+		    this.drawActorMp(actor, x2, y + lineHeight * 1.8, width2);
+		    let x3 = x2 + width2 + 10;
+		    this.drawActorIcons(actor, x3, y + lineHeight * 0);		    
+		};
+		drawActorIcons (actor, x, y, width) {
+		    width = width || 144;
+		    var icons = actor.allIcons().slice(0, Math.floor(width / Window_Base._iconWidth));
+		    for (var i = 0; i < icons.length; i++) {
+		        this.drawIcon(icons[i], x , y + Window_Base._iconWidth * i + 1);
+		    }
+		};
+
+		drawActorHp (actor, x, y, width) {
+		    width = width || 186;
+		    var color1 = this.hpGaugeColor1();
+		    var color2 = this.hpGaugeColor2();
+		    this.drawGauge(x, y, width, actor.hpRate(), color1, color2);
+		    this.changeTextColor(this.systemColor());
+		    this.drawText(TextManager.hpA, x, y, 44);
+		    this.drawCurrentAndMax(actor.hp, actor.mhp, x, y, width,
+		                           this.hpColor(actor), this.normalColor());
+		};
+		drawGauge (x, y, width, rate, color1, color2) {
+		    var fillW = Math.floor(width * rate);
+
+		    var gaugeY = y + this.lineHeight() - 8;
+		    this.contents.fillRect(x, gaugeY, width, 24, this.gaugeBackColor());
+
+		    this.contents.gradientFillRect(x, gaugeY, fillW, 24, color1, color2);
+		};
+		createContents () {
+		    this.contents = new Bitmap(Graphics._boxWidth, Graphics._boxHeight);
+		    this.resetFontSettings();
+		};
+
+		drawActorClass (actor, x, y, width) {
+		    width = width || 168;
+		    this.resetTextColor();
+		    this.drawText(actor.currentClass().name, x, y, width);
+		};		
+		drawItemStatus (index) {
+		    var actor = this._actor;
+		    var rect = this.itemRect(index);
+
+		    var x = this.windowXSp(rect.width) + 162;
+		    var y = rect.y + rect.height / 2 - this.lineHeight() * 1.5;
+		    var width = rect.width - x - this.textPadding();
+    		this.drawActorSimpleStatus(actor, x, y + 10, width);
+			this.drawItemImage(actor, x  - 160 , y , width);    		
+		};	
+		drawItemImage (actor , x, y, w ){
+
+		    this.changePaintOpacity(actor.isBattleMember());
+		    this.drawActorFace(actor, x, y, Window_Base._faceWidth, Window_Base._faceHeight);
+		    this.changePaintOpacity(true);
+		}
+
+		maxCols (){
+			return 1;
+		}
+		spacing (){
+			return 30;
+		}
+		windowXSp (width){
+			return Graphics.boxWidth / 2 - width /2 + actor_x;
+		}		
+		itemRect (index){
+		    var rect = new Rectangle();
+		    var maxCols = this.maxCols();
+		    rect.width = this.itemWidth();
+		    rect.height = this.itemHeight();
+		    rect.x = index % maxCols * (rect.width + this.spacing()) - this.x / 2;
+		    rect.y = Math.floor(index / maxCols) * rect.height - 30;
+		    return rect;
+
+		}	
+		itemHeight (){
+			return this.windowHeight();
+		}			
+		itemWidth (){
+			return this.windowWidth();
+		}	
+	}
+	class Window_CatMenuActorStatus extends Window_CatMenuActorSkill {
+		constructor (x, y){
+			super(0, 0);
+		}
+		initialize (){
+			Window_CatMenuActorSkill.prototype.initialize.call(this, 0, 0);
+
+			// this.opacity = 255;
+		}	
+		drawItemStatus (index) {
+			log('dddd')
+		    var actor = this._actor;
+		    var rect = this.itemRect(index);
+
+		    // var x = rect.x + 162;
+		    var x = rect.x + 217;
+		    var y = rect.y + 25;
+		    var width = rect.width - x - this.textPadding();
+    		this.drawActorSimpleStatus(actor, x, y + 10, width);
+			this.drawItemImage(actor, x  - 160 , y , width);    		
+			this.drawProfile(6, 180);
+			this.drawParameters(this.width / 2 + 35, y + 10)
+		};				
+
+		drawProfile (x, y) {
+    		this.drawTextEx(this._actor.profile(), x, y);
+		};	
+		windowHeight (){
+			return 455;
+		}		
+		drawParameters (x, y) {
+		    var lineHeight = this.lineHeight();
+		    let offset = 10;
+		    let x2 = x + 250;
+		    let num = 3;
+		    for (var i = 0; i < 6; i++) {
+		        var paramId = i + 2;
+		        var y2 = y + (lineHeight + offset ) * i ;
+
+
+		        if (i > 2 ) { 
+		        	x = x2;
+		        	var y2 = y + (lineHeight + offset ) * (i - num) ;
+		        }
+
+		        this.changeTextColor(this.systemColor());
+		        this.drawText(TextManager.param(paramId), x, y2, 160);
+		        this.resetTextColor();
+		        this.drawText(this._actor.param(paramId), x + 160, y2, 60, 'right');
+		    }
+		};
+
+
+	}	
+
+	class Window_CatEquipSlot extends Window_EquipSlot{
+		constructor(x, y, w, h){
+			super(x, y, w, h);
+		}
+		initialize (x, y, w, h){
+			x = this.windowX();
+			y = this.windowY();
+			w = this.windowWidth();
+			h = this.windowHeight();
+			Window_EquipSlot.prototype.initialize.call(this, x, y, w, h);	
+			this.opacity = 0;
+		}
+		maxCols (){
+			return 2;
+		}		
+		maxRows (){
+			return 3;
+		}
+		windowX (){
+			return 30;
+		}
+		windowY (){
+			return 133;
+		}
+		windowHeight (){
+			return 165;
+		}
+		windowWidth (){
+			return (1220 / 2);
+		}		
+
+
+		drawItem (index) {
+			let offsetLv = 30;
+			let offsetItem = - 50;
+		    if (this._actor) {
+		        var rect = this.itemRectForText(index);
+		        this.changeTextColor(this.systemColor());
+		        this.changePaintOpacity(this.isEnabled(index));
+
+		        if (index == 0){
+		        	this.resetTextColor();
+		        	this.drawText(this._actor._name, rect.x, rect.y, 138, this.lineHeight());	
+
+		        	this.changeTextColor(this.systemColor());
+		        	this.drawText(TextManager.levelA, rect.x + rect.width / 2 + offsetLv , rect.y, 138, this.lineHeight());			        	
+
+		        	this.resetTextColor();
+		        	this.drawText(this._actor._level, rect.x + rect.width / 2 + 50 + offsetLv, rect.y, 138, this.lineHeight());	
+		        	this.changeTextColor(this.systemColor());
+
+		        }
+		        else {
+		        	this.drawText(this.slotName(index - 1), rect.x, rect.y, 138, this.lineHeight());
+		        }
+		        
+		        this.drawItemName(this._actor.equips()[index - 1], rect.x + 138 + offsetItem , rect.y);
+		        this.changePaintOpacity(true);
+		    }
+		};	
+		lineHeight (){
+			return 40;
+		}
+
+		slotName (index) {
+		    var slots = this._actor.equipSlots();
+		    return this._actor ? $dataSystem.equipTypes[slots[index]] : '';
+		};	
+		maxItems () {
+    		return this._actor ? this._actor.equipSlots().length + 1 : 0;
+		};
+		itemRectForText (index) {
+		    var rect = this.itemRect(index);
+		    rect.x += this.textPadding();
+		    rect.width -= this.textPadding() * 2;
+		    return rect;
+		};		
+		itemRect (index) {
+		    var rect = new Rectangle();
+		    var maxCols = this.maxCols();
+		    let maxRows = this.maxRows();
+		    rect.width = this.itemWidth();
+		    rect.height = this.itemHeight();		    
+		    rect.x = Math.floor (index / maxRows) * rect.width - this._scrollX;
+		    rect.y = (index % maxRows) * rect.height - this._scrollY;
+		    return rect;
+		};
+
+		// doing
+		cursorDown (wrap) {
+		    var index = this.index() - 1;
+		    var maxItems = this.maxItems();
+		    var maxCols = this.maxCols();
+		    if ( maxCols >= 2 || (wrap && maxCols === 1)) {
+		        this.select( (index + maxCols) % maxItems );
+		    }
+		};
+		select (index ){
+
+		    this._index = (index == 0 ) ? 1 : index;
+		    this._stayCount = 0;
+		    this.ensureCursorVisible();
+		    this.updateCursor();
+		    this.callUpdateHelp();					
+
+
+		}
+
+
+		cursorUp (wrap) {			
+		    var index = this.index() - 1;
+		    var maxItems = this.maxItems();
+		    var maxCols = this.maxCols();
+		    if (index == 0 || index < 0){
+		    	this.select(maxItems - 1);
+		    }
+
+		    else if (maxCols >= 2 || (wrap && maxCols === 1)) {
+		        this.select( (index + maxItems) % maxItems);
+		    }
+		};
+
+		cursorRight (wrap) {
+		    var index = this.index() ;
+		    var maxItems = this.maxItems();
+		    var maxCols = this.maxCols();
+		    var maxRows = this.maxRows();
+		    if (maxCols >= 2 && (wrap && index >= 0 )) {
+		        this.select( ( index  + maxCols + 1 ) % maxItems);
+		    }
+		};
+
+		cursorLeft (wrap) {
+		    var index = this.index() ;
+		    var maxItems = this.maxItems();
+		    var maxCols = this.maxCols();
+		    if (maxCols >= 2 && ( wrap && index >= 0 )) {
+		    	log("index " +  index + " , cols :" + maxCols + ", maxItems : "+maxItems)		    	
+		        this.select(( index  + maxCols + 1)  % maxItems);
+		    }
+		};
+		//doing
+		cursorPagedown () {
+		    var index = this.index();
+		    var maxItems = this.maxItems();
+		    if (this.topRow() + this.maxPageRows() < this.maxRows()) {
+		        this.setTopRow(this.topRow() + this.maxPageRows());
+		        this.select(Math.min(index + this.maxPageItems(), maxItems - 1));
+		    }
+		};
+
+		cursorPageup () {
+		    var index = this.index();
+		    if (this.topRow() > 0) {
+		        this.setTopRow(this.topRow() - this.maxPageRows());
+		        this.select(Math.max(index - this.maxPageItems(), 0));
+		    }
+		};
+
+	}
+	class Window_EquipParameter extends Window_Base{
+		constructor (){
+			super();
+		}
+		initialize (x , y , w, h ){
+			x = this.windowX();
+			y = this.windowY();
+			w = this.windowWidth();
+			h = this.windowHeight();
+			Window_Base.prototype.initialize.call(this, x ,y , w ,h);
+			// this.setActor($gameParty.members()[0]);
+			this._item;
+			this.opacity = 0;
+			
+			this.open()
+
+		}
+		item (){
+			return this._item;
+		}
+		setItemFromScene ( item ){
+			if (item){
+				this._item = item;
+			}
+		}
+
+		setActor ( actor , item){
+			if (this._item != item){
+				this._item = item;
+
+			}
+			if (this._actor != actor){
+				this._actor = actor;
+				this.refresh();
+			}
+		}
+		setTempActor (tempActor) {
+
+		    if (this._tempActor !== tempActor || this._actor ) {
+		        this._tempActor = tempActor;
+		        this.refresh();
+		    }
+		};
+
+		refresh (){
+			this.contents.clear();
+			this.drawParam();
+		}
+		drawParam (){
+			this.drawParameters(0 ,0 );
+		}
+		drawParameters (x, y) {
+			this._actor = this._actor || $gameParty.members()[0];
+
+
+		    var lineHeight = this.lineHeight();
+		    let offset = 10;
+		    let x2 = x + 280;
+		    let num = 3;
+		    for (var i = 0; i < 6; i++) {
+		        var paramId = i + 2;
+		        var y2 = y + (lineHeight + offset ) * i ;
+		        if (i > 2 ) { 
+		        	x = x2;
+		        	var y2 = y + (lineHeight + offset ) * (i - num) ;
+		        }
+
+		        this.changeTextColor(this.systemColor());
+		        this.drawText(TextManager.param(paramId), x, y2, 160);
+		        this.resetTextColor();
+		        this.drawParamWithEquip(this._actor.param(paramId), paramId, x + 215, y2 , 160 , 'left');
+
+		        
+
+		    }
+		};
+
+
+
+		drawParamWithEquip (base , paramId, x , y , w , align){
+			if (this._tempActor){
+				this.drawOtherEquipParam(base , paramId, x, y , w ,align);
+				return;
+			}
+			this.drawText(base, x, y, w, align);
+
+			
+		}
+		drawOtherEquipParam (base , paramId, x , y , w , align){
+			let newValue = this._tempActor.param(paramId);
+			let oldValue = this._actor.param(paramId);
+
+			let colorStr = newValue == oldValue ? "white" : newValue > oldValue ? "#1eff00" : "#ff0000";
+
+			this.changeTextColor(colorStr);
+			this.drawText(newValue, x, y, w, align);
+			this.resetTextColor()
+
+		}
+
+
+
+
+		drawParamName (x, y, paramId) {
+		    this.changeTextColor(this.systemColor());
+		    this.drawText(TextManager.param(paramId), x, y, 120);
+		};
+
+
+
+		windowX (){
+			return 30;
+		}
+		windowY (){
+			return 133;
+		}
+		windowHeight (){
+			return 165;
+		}
+		windowWidth (){
+			return (1220 / 2);
+		}		
+	}
+
 
 	class Window_CatEnd extends Window_GameEnd{
 		constructor (){
@@ -2406,10 +3085,17 @@ chimaki_plugin.menucattext._getJSName          = document.currentScript.src.subs
 		};
 
 	}
+	window.Window_CatMenuActorSkill = Window_CatMenuActorSkill;
+	window.Window_CatMenuActor = Window_CatMenuActor;
+	window.Window_CatMenuStatus = Window_CatMenuStatus
+	window.Window_CatMenuActorStatus = Window_CatMenuActorStatus;
 
+	window.Window_CatEquipSlot = Window_CatEquipSlot;
+	window.Window_EquipParameter = Window_EquipParameter;
 	window.Scene_CatGakuen = Scene_CatGakuen;
 	window.Scene_CatItem = Scene_CatItem;
 	window.Scene_CatEnd = Scene_CatEnd;
+
 
 }());
 

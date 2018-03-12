@@ -1,6 +1,6 @@
 //=============================================================================
 // Chimaki_Rabbitsurviva.js
-// Version: 0.0.1
+// Version: 2.0
 //=============================================================================
 /*:
 * @plugindesc 兔子生存功能
@@ -9,940 +9,1217 @@
 * @param MenuSwitch
 * @desc This is the switch of all system.
 * @default 90
-*
-* @param BookUISwitch 
-* @desc 按X要不要啟用書本Menu開關
-* @default 89
-*
-* @param Heart_01
-* @desc 最右邊愛心 顯示開關;啟動開關;控制增減變數;最大值;最後紀錄現在值變數
-* @default 80;79;80;100;79
-*
-* @param Heart_02
-* @desc  中間的量表 顯示開關;啟動開關;控制增減變數;最大值;最後紀錄現在值變數
-* @default 78;77;78;100;77
-*
-* @param Heart_03
-* @desc 最左邊的量表 顯示開關;啟動開關;控制增減變數;最大值;最後紀錄現在值變數
-* @default 76;75;76;100;75
-*
-* @param TimerHoru
-* @desc 時針的位置變數,系統用,留一個變數編號給我用就對了,感謝
-* @default 90
-*
-* @param TimerSceond
-* @desc 指針的位置變數,系統用,留一個變數編號給我用就對了,感謝
-* @default 89
-*
-* @param DayVar
-* @desc 天數的變數,直接修改就可以改變日期
-* @default 88
-*
-* @param offsetXY
-* @desc 愛心座標微調整
-* @default -10;5
 * 
-* @param offsetNumXY
-* @desc 愛心數字座標微調整
-* @default 0;7
+* @param MenuImageVar
+* @desc 用哪一個變數決定圖片變換
+* @default 2
+* 
+* @param MenuImageName
+* @desc 圖片輪播參數 [變數值, 圖片主檔名, 偵] 為一組, 用分號隔開
+* @default [1,Broken,1];[2,Normal,30];[3,Uncomfortable,10]
+* 
+* @param needGold
+* @desc 金幣視窗控制開關
+* @default 3
+* 
+* @param menuContral
+* @desc 指令控制
+* @default 
 *
-*
-* @param TimerVar
-* @desc 時間變數,系統用,留一個變數編號給我用就對了,感謝
-* @default 87
-* 
-* @param TimerVarTemp
-* @desc 時間變數暫存,系統用,留一個變數編號給我用就對了,感謝
-* @default 86
-* 
-* @param DaySwitch
-* @desc 日期與日期底圖的顯示開關
-* @default 88
-* 
-* @param ClockSwitch
-* @desc 時鐘/指針開關
-* @default 21
-* 
-* @param DayOffset
-* @desc 日期微調座標 X ;微調座標 Y;
-* @default -30;-40
-*
-* ============================================================================
-* @help
-* 12/28 修正圖片寬高錯位
-* 0.0.1
-* ＊＊＊＊＊使用教學＊＊＊＊＊
-* 需要搭配Chimaki_ManagerTool一起使用, 讀圖路徑設定都在Chimaki_ManagerTool
-* Surviva start 讓時鐘開始計時
-* Surviva stop 讓時鐘暫停計時
-* Surviva reset 讓時鐘數字歸 0
-* Surviva addMin 1  = 加1分鐘, 減少則輸入負數
-* Surviva addHour 1  = 加1小時
-* 
-* 注意事項:
-* Heart_01 ~03 中的 '啟動開關' 目前還沒有用處, 但還是先請依照格式填寫參數
 * 
 */
-//=============================================================================
-//=============================================================================
-// Plugin Start
-//=============================================================================
-var Imported = Imported || {};
-Imported.Chimaki_Rabbitsurviva = {};
 
-function Game_SurTimer (){
+
+'use strict';
+
+var Imported = Imported || {};
+Imported.Chimaki_Rabbitsurviva = Imported.Chimaki_Rabbitsurviva || {};
+var rabbitsurviva =  Imported.Chimaki_Rabbitsurviva;
+
+rabbitsurviva.alias = {};
+rabbitsurviva.param = {};
+rabbitsurviva.contst = {};
+
+
+var surviva = rabbitsurviva.param;
+
+var surviva = PluginManager.parameters('Chimaki_Rabbitsurviva');
+var chimaki_menu_switch = Math.floor(surviva['MenuSwitch']|| 90);	
+var chimaki_menu_img_data = surviva["MenuImageName"].split(";");
+var chimaki_menu_img_var = Math.floor(surviva['MenuImageVar'] || 2);
+var chimaki_need_gold = Math.floor(surviva['needGold'] || 3);	
+var menu_button_offsetY = 80;
+var rabbit_back_opacity = 165;
+
+rabbitsurviva.contst.statu_width = 1222;
+rabbitsurviva.contst.statu_height = 169;
+rabbitsurviva.contst.statu_y = 131;
+rabbitsurviva.contst.statu_x = 30;
+rabbitsurviva.contst.type_x = 30;
+rabbitsurviva.contst.type_y = 30;
+
+rabbitsurviva.contst.status_infoX = 30;
+rabbitsurviva.contst.status_infoY = 130;
+rabbitsurviva.contst.status_name_infoX = rabbitsurviva.contst.status_infoX + 160;
+rabbitsurviva.contst.status_name_offsetY = 50;
+
+rabbitsurviva.contst.status_hp_infoX = rabbitsurviva.contst.status_name_infoX + 180; 
+rabbitsurviva.contst.status_hp_offsetY = 80;
+rabbitsurviva.contst.GaugeHeight = 20;
+rabbitsurviva.contst.status_hpFontSize = 40;
+rabbitsurviva.contst.param_infoX = rabbitsurviva.contst.status_hp_infoX + 250;
+
+rabbitsurviva.contst.status_param_infoX = rabbitsurviva.contst.param_infoX + 100;
+rabbitsurviva.contst.param_lineheight_offset = 10;
+(function(){
+
+
+
+
+	class Window_RabbitSurviva extends Window_Base {
+		constructor (x, y , w ,h){
+			super(x, y , w ,h);
+		}
+		initialize (x , y, w, h){
+			Window_Base.prototype.initialize.call(this, x, y, w, h);
+			this.openness = 0;
+			this._list = [];
+
+			this.createAllSpriteButton();
+			this.select(0);
+
+		}
+		update (){
+			Window_Base.prototype.update.call(this)	;
+			if (TouchInput.isTriggered()){
+				this.updateMenuBeTouch();	
+			}
+			else if (Input.isTriggered('up') || Input.isTriggered('down')){
+				this.clearTouched()
+				this.updateSelect();
+			}
+			else if (Input.isTriggered('cancel')){
+				SoundManager.playCancel()
+				SceneManager.pop();
+			}
+			if (Input.isTriggered('ok')){
+				this.processHandler(this.index());
+			}			
+			
+		}
+
+		processHandler ( index ){
+			this._list[index]._clickHandler();
+		}
+
+		clearTouched (){
+			this._list.forEach(function (sp ){
+					sp.setBeSelect(false);	
+			})						
+		}
+		updateMenuBeTouch (){
+			this.clearTouched();
+			this._list.forEach(function (sp ){
+				if (sp._touching){
+					sp.setBeSelect(true);	
+				}
+			})
+			for (let i = 0; i < this._list.length; i++){
+				let sp = this._list[i];
+				if (sp.isBeSelect()){
+					this.select(i);
+				}
+			}
+		}
+		select ( index ){
+			this._index = index;
+			this._list[index].setBeSelect(true);
+		}
+		createAllSpriteButton (){
+			this._menu_filed = new Sprite();
+			this.createSubSprite();
+			this.addChild(this._menu_filed);	
+		}
+		createSubSprite (){
+			let list = this.getMenuKeyName();
+			for (let i = 0; i < list.length; i++){
+				let name = list[i];
+				let sp = new Sprite_ButtonMenu();
+				let bitmap = ImageManager.loadRabbitsurvival("Icon_" + name);
+				sp.bitmap = bitmap;
+				sp.setColdFrame(0, 0, 286,60);
+				sp.setHotFrame(0, 60, 286,60);
+				sp.y = i * menu_button_offsetY;
+				sp.key_name = name;
+
+				sp.setClickHandler(eval ("this.on" + name + "click.bind(this)" )); // handler function
+
+				this._list.push(sp);		
+				this._menu_filed.addChild(sp);
+
+			}
+		}
+
+
+
+		onItemOk () {
+		    $gameParty.setLastItem(this.item());
+		    this.determineItem();
+		};		
+		onBOXclick (){
+			SceneManager.push(Scene_CatItem);
+		}
+		onSKILLclick (){	
+			SceneManager.push(Scene_RabbitSkill);
+		}
+		onEQUIPclick (){
+			SceneManager.push(Scene_RabbitEquip);
+		}
+		onSTATUSclick (){
+			SceneManager.push(Scene_RabbitStatus);
+		}	
+		onSAVEclick (){
+			SceneManager.push(Scene_Save);
+		}
+		onGAKUENclick (){
+			SceneManager.push(Scene_CatGakuen);
+		}	
+		onSOUNDclick (){
+			SceneManager.push(Scene_Options);
+		}	
+		onEXITclick (){
+			SceneManager.push(Scene_RabbitGameEnd);
+		}	
+		onBACKclick (){
+			SceneManager.pop();
+		}									
+		getMenuKeyName (){
+		    var flags = $dataSystem.menuCommands;
+		    let list = [];
+
+			if (flags[0]){
+				list.push('BOX');
+			}
+			if (flags[1]){
+				list.push('SKILL');
+			}
+			if (flags[2]){
+				list.push('EQUIP');
+			}
+			if (flags[3]){
+				list.push('STATUS');
+			}
+			if (flags[5]){
+				list.push('SAVE');
+			}			
+			list.push('GAKUEN');
+			list.push('SOUND');
+			list.push('EXIT');
+			list.push('BACK');
+			return list;
+
+			
+		}
+		index (){
+			return this._index;
+		}
+		updateSelect (){
+	        var lastIndex = this.index();
+	        if (Input.isRepeated('down') || Input.isTriggered('down')) {
+	            this.buttonDown();
+	        }
+	        if (Input.isRepeated('up') || Input.isTriggered('up')) {
+	            this.buttonUp();
+	        }			
+
+	        if (this.index() !== lastIndex) {
+	            SoundManager.playCursor();
+	        }	        
+		}
+		length (){
+			return this._list.length;
+		}
+		buttonDown (){
+			let len = this.length();
+			if (this.index() + 1 >= len){
+				this.select(0);
+			}
+			else {
+				this.select(this.index() + 1);
+			}
+
+		}
+		buttonUp (){
+			let len = this.length();
+			if (this.index() - 1 < 0){
+				this.select(len -  1);
+			}
+			else {
+				this.select(this.index() - 1);
+			}
+		}
+	}
+
+	Window_RabbitSurviva._last_select = 0;
+
+
+
+	class Window_RabbitGameEnd extends Window_GameEnd{
+		constructor (x, y ,w ,h){
+			super(x, y ,w ,h);			
+		}
+		initialize (x, y ,w ,h){
+			Window_GameEnd.prototype.initialize.call(this,x, y ,w ,h);
+			this.backOpacity = 0;
+			this.setSkinNoFrame();
+		}			
+		makeCommandList () {
+		    this.addCommand(TextManager.toTitle, 'toTitle');
+		};		
+	}
+	class Window_RabbitStatus extends Window_Status {
+		constructor (){
+			super();
+		}
+		initialize (){
+			Window_Status.prototype.initialize.call(this);
+			this.setSkinNoFrame();
+			this.backOpacity = 0;
+		}
+	}
+	class Scene_RabbitStatus extends Scene_Status {
+		constructor (){
+			super();
+		}
+		initialize (){
+			Scene_Status.prototype.initialize.call(this);
+
+		}			
+		create (){
+			Scene_MenuBase.prototype.create.call(this);
+			this.createBackGround();
+			this.createTypeSprite();	
+			this.createBackButtonSprite();
+			this.createStatuWindow();			
+			this.createNextSprite();
+		}
+
+		createStatuWindow (){
+		    this._statusWindow = new Window_CatMenuActorStatus();
+
+		    this.addChild(this._statusWindow);
+		    this.refreshActor();
+		}
+		start (){
+			Scene_MenuBase.prototype.start.call(this);
+			this.checkNextMember();
+			this._statusWindow.refresh();
+		}
+		typeName (){
+			return 'STATUS';
+		}	
+		update (){
+			Scene_Status.prototype.update.call(this);
+			if (Input.isTriggered('cancel')){
+				SceneManager.pop();
+			}
+		}
+   
+	}	
+	class Scene_RabbitEquip extends Scene_Equip {
+		constructor (){
+			super();
+		}		
+		initialize (){
+			Scene_Equip.prototype.initialize.call(this);
+		}		
+		create (){
+			Scene_MenuBase.prototype.create.call(this);
+			this.createBackGround();
+			this.createTypeSprite();	
+			this.createBackButtonSprite();
+			this.createActorEquipWindow();
+			this.createParamWindow();
+			this.createItemWindow()
+			this.createNextSprite();			
+
+		}
+		start (){
+			Scene_Equip.prototype.start.call(this);
+			this.checkParamData();
+			this.checkNextMember()
+		}
+		checkParamData (){
+			this._paramWindow.setActor(this.actor());
+			this._paramWindow.show()
+			this._paramWindow.open();
+
+		}
+		createNextSprite  (){
+			this._next_sp = new Sprite_ButtonMenu();
+			let bitmap = ImageManager.loadRabbitsurvival('Menu_Next');
+			this._next_sp.bitmap = bitmap;
+			this._next_sp.x = Graphics._boxWidth - rabbitsurviva.contst.type_x - 200 ;
+			this._next_sp.y = rabbitsurviva.contst.type_y ;
+			this._next_sp.setColdFrame(0, 0, 200,60);
+			this._next_sp.setHotFrame(0, 60, 200,60);
+			this._next_sp.visible = false;
+			this._next_sp.setClickHandler(this.turnToNextMember.bind(this));	
+
+			this.addChild(this._next_sp);
+
+		}
+
+		// doing
+		createItemWindow (){
+			let y = rabbitsurviva.contst.statu_y + rabbitsurviva.contst.statu_height + 17;
+			let x = rabbitsurviva.contst.statu_x;
+			let w = 1223;
+			let h = 266;
+			this._itemWindow = new Window_RabbitEquipItem(x, y, w, h);
+			this._itemWindow.setActor(this.actor());
+			this._slotWindow.setItemWindow(this._itemWindow);
+			this._itemWindow.setParamWindow(this._paramWindow);
+			this._itemWindow.setHandler('ok', this.onEQItemOk.bind(this));
+			this._itemWindow.setHandler('cancel', this.onEQItemCancel.bind(this));
+			this.addChild(this._itemWindow);
+
+		}
+		onEQItemOk (){
+		    SoundManager.playEquip();
+		    this.actor().changeEquip(this._slotWindow.index() -1 , this._itemWindow.item());
+		    this._slotWindow.activate();
+		    this._slotWindow.refresh();
+		    this._itemWindow.deselect();
+		    this._itemWindow.refresh();
+
+		}
+		onEQItemCancel (){
+			this._slotWindow.activate();
+			this._itemWindow.deselect()
+			this._itemWindow.deactivate();
+
+		}
+
+		createHelpWindow () {
+		    this._helpWindow = new Window_Help();
+		    this._helpWindow.windowskin = ImageManager.loadSystem('Window_Noframe');
+		    this.addWindow(this._helpWindow);
+		};		
+
+		createActorEquipWindow (){
+			this._slotWindow = new Window_CatEquipSlot(0, 0, 300, 100);
+		    var actor = this.actor();
+		    this._slotWindow.setActor(actor);
+			this._slotWindow.activate();
+    		this._slotWindow.setHandler('ok',       this.onSlotOk.bind(this));			
+			this._slotWindow.setHandler('cancel' , this.onSlotCancel.bind(this));
+
+			this.addChild(this._slotWindow);
+		}
+		onSlotOk () {
+			this._itemWindow.tempActorData();
+		    this._itemWindow.activate();
+		    this._itemWindow.select(0);
+		    this.refreshActor();
+		    
+		};		
+		onSlotCancel (){
+			SceneManager.pop();
+		}
+		createParamWindow (){
+			this._paramWindow = new	Window_EquipParameter();
+			this._paramWindow.x = this._slotWindow.x + this._slotWindow.width ;
+
+			this.addChild(this._paramWindow);
+		}
+		slotName (index) {
+		    var slots = this._actor.equipSlots();
+		    return this._actor ? $dataSystem.equipTypes[slots[index]] : '';
+		};
+		onActorChange () {
+		    this.refreshActor();
+		    // this._commandWindow.activate();
+		};
+		typeName (){
+			return 'EQUIP';
+		}		
+		refreshActor () {
+		    var actor = this.actor();
+
+		    this._itemWindow.tempActorData(this._itemWindow.item());
+		    this._slotWindow.setActor(actor);
+		    this._itemWindow.setActor(actor);
+		    	
+		    
+		};			
+	}
+	class Scene_RabbitGameEnd extends Scene_GameEnd{
+		constructor (){
+			super();
+		}
+		initialize (){
+			Scene_GameEnd.prototype.initialize.call(this);
+		}	
+
+		createCommandWindow () {
+		    this._commandWindow = new Window_RabbitGameEnd();
+		    this._commandWindow.setHandler('toTitle',  this.commandToTitle.bind(this));
+		    this.addWindow(this._commandWindow);
+		};		
+		create (){
+			Scene_GameEnd.prototype.create.call(this);
+			this.createBackGround();
+			this.createTypeSprite();
+			this.createBackButtonSprite();
+		}
+		update (){
+			Scene_GameEnd.prototype.create.call(this);
+			if (Input.isTriggered('cancel')){
+				this.onTouchBack()	
+			}	
+		}
+		createBackGround  (){
+			this._backgroundFiled = new Sprite();
+
+			this._black_sp = new Sprite(new Bitmap(Graphics._boxWidth, Graphics._boxHeight));
+			this._black_sp.bitmap.fillAll('black');
+			this._black_sp.opacity = rabbit_back_opacity;
+			this._backgroundFiled.addChild(this._black_sp);
+
+
+			this._back_back = new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_02'));
+			this._backgroundFiled.addChild(this._back_back);
+
+			// this._back_midden =  new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_02'));
+			// this._backgroundFiled.addChild(this._back_midden);			
+
+			this._back_up = new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_01'));
+			this._backgroundFiled.addChild(this._back_up);
+
+			this.addChildAt(this._backgroundFiled, 1);
+		}		
+		typeName (){
+			return 'EXIT';
+		}
+
+	}
+ 	class Scene_RabbitSkill extends Scene_Skill{
+		constructor (){
+			super();
+		}
+		initialize (){
+			Scene_Skill.prototype.initialize.call(this);
+		}	
+
+		create (){
+		    Scene_ItemBase.prototype.create.call(this);
+		    this.createBackGround();
+		    this.createHelpWindow();
+		    this.createStatusWindow();
+		    this.createSkillListWindow();
+		    
+		    this.createNextSprite();
+		    this.createTypeSprite();
+		    this.createBackButtonSprite();
+		    this.createActorWindow();
+		    
+		    this.refreshActor();
+
+		}
+
+		typeName (){
+			return 'SKILL';
+		}
+
+		start (){		
+			this.refreshActor();
+
+			this._statusWindow.refresh();
+			this._itemWindow.refresh();			
+			Scene_Skill.prototype.start.call(this);
+			this._statusWindow.activate()
+	    	this._itemWindow.activate();
+	    	this._itemWindow.selectLast();
+
+	    	this.checkNextMember();
+
+			
+		}
+
+		onActorChange () {
+			this.refreshActor();
+			this._helpWindow.clear();
+			this._helpWindow.setItem(this.item())
+		};
+		nextActor () {
+			
+		    $gameParty.makeMenuActorNext();
+		    this.updateActor();
+		    this.onActorChange();
+		};		
+		update (){
+			Scene_Skill.prototype.update.call(this);
+			if (Input.isTriggered('cancel')){
+				SceneManager.pop();
+			}
+		}
+		onItemOk () {
+			this.deactiveSkillUI();
+		    this.actor().setLastMenuSkill(this.item());
+		    this.determineItem();			
+		};
+		onItemCancel () {
+		    this._itemWindow.deselect();
+		    SceneManager.pop();
+		};			
+		/* 使用技能選角色 */
+		onActorOk () {
+		    if (this.canUse()) {
+		        this.useItem();
+		    } else {
+		        SoundManager.playBuzzer();
+		    }
+		};
+
+		onActorCancel () {
+		    this.hideSubWindow(this._actorWindow);
+		    this.activeSkillUI();
+		};
+		deactiveSkillUI (){
+
+			this._itemWindow.hide();
+			this._statusWindow.hide();
+			this._actorWindow.show();
+			this._back_back.visible = false;			
+			this._next_sp.visible = false;
+		}
+		activeSkillUI() {
+			this._itemWindow.show();
+			this._statusWindow.show();
+			this._back_back.visible = true;			
+			this._next_sp.visible = true;
+		}
+		determineItem () {
+		    var action = new Game_Action(this.user());
+		    var item = this.item();
+		    action.setItemObject(item);
+		    if (action.isForFriend()) {
+		        this.showSubWindow(this._actorWindow);
+		        this._actorWindow.selectForItem(this.item());
+		    } else {
+		        this.useItem();
+		        this.activateItemWindow();
+		    }
+		};
+
+		/* 選擇技能狀態 */
+		createActorWindow () {
+		    this._actorWindow = new Window_CatMenuActor();
+		    this._actorWindow.setHandler('ok',     this.onActorOk.bind(this));
+		    this._actorWindow.setHandler('cancel', this.onActorCancel.bind(this));
+
+		    this._actorWindow.hide();
+		    this.addWindow(this._actorWindow);
+		};		
+		itemTargetActors () {
+
+		    var action = new Game_Action(this.user());
+		    action.setItemObject(this.item());
+		    if (!action.isForFriend()) {
+		        return [];
+		    } else if (action.isForAll()) {
+		        return $gameParty.members();
+		    } else {
+		        return [$gameParty.members()[this._actorWindow.index()]];
+		    }
+		};			
+		useItem () {
+		    this.playSeForItem();
+		    this.user().useItem(this.item());
+		    this.applyItem();
+		    this.checkCommonEvent();
+		    this.checkGameover();
+		    this._actorWindow.refresh();
+		    this._statusWindow.refresh();
+
+		};	
+		showSubWindow (window) {
+		    window.show();
+		    window.activate();
+		};			
+		/* 使用技能選角色 */
+
+
+		createHelpWindow () {
+		    this._helpWindow = new Window_Help();
+		    this._helpWindow.windowskin = ImageManager.loadSystem('Window_Noframe');
+		    this.addWindow(this._helpWindow);
+		};		
+		createSkillListWindow (){
+			let y = rabbitsurviva.contst.statu_y + rabbitsurviva.contst.statu_height + 17;
+			this._itemWindow = new Window_RabbitSkillList(rabbitsurviva.contst.statu_x, y, 1200, 266)
+			this._itemWindow.setHelpWindow(this._helpWindow);
+			this._helpWindow.height += 10; 
+			this._helpWindow.y = Graphics._boxHeight - this._helpWindow.height;
+		    this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
+		    this._itemWindow.setHandler('cancel', this.onItemCancel.bind(this));			
+			this.addChild(this._itemWindow);
+		}
+		createStatusWindow () {
+		    var wx = rabbitsurviva.contst.statu_x;
+		    var wy = rabbitsurviva.contst.statu_y;
+		    var ww = rabbitsurviva.contst.statu_width;
+		    var wh = rabbitsurviva.contst.statu_height;
+		    this._statusWindow = new Window_CatMenuActorSkill(wx, wy, ww, wh);
+			this._statusWindow.setActor($gameParty.members()[0]);
+		    this.addWindow(this._statusWindow);
+		};		 
+		//doing
+		refreshActor () {
+		    var actor = this.actor();		    
+
+		    this._statusWindow.setActor(actor);
+		    this._itemWindow.setActor(actor);
+		    
+		    this._itemWindow.refresh();
+		    this._statusWindow.refresh();
+		};		
+	}
+	class Window_RabbitMenuActor extends Window_MenuActor{
+		constructor (x , y, w, h){
+			super(x , y, w, h);
+		}
+		initialize (x , y, w, h){
+			Window_MenuActor.prototype.initialize.call(this, x , y, w, h);			
+			this.x = 26;
+			this.y = 310;
+			this.width = 1230;
+			this.height = 282;
+
+			this.setSkinNoFrame()
+		}
+		refresh (){
+			Window_MenuActor.prototype.refresh.call(this);
+		}			
+	}
+
+
+
+	/* 技能視窗 - list*/
+	class Window_RabbitSkillList extends Window_SkillList{
+		constructor (x , y, w, h){
+			super(x , y, w, h);
+		}
+		initialize (x , y, w, h){
+			Window_SkillList.prototype.initialize.call(this, x , y, w, h);			
+			this.setSkinNoFrame()
+			this.opacity = 0;
+		}		
+		drawItem (index) {
+		    var skill = this._data[index];
+		    if (skill) {
+		        var costWidth = this.costWidth();
+		        var rect = this.itemRect(index);
+		        rect.width -= this.textPadding();
+		        this.changePaintOpacity(this.isEnabled(skill));
+		        this.drawItemName(skill, rect.x, rect.y, rect.width - costWidth);
+		        this.drawSkillCost(skill, rect.x, rect.y, rect.width);
+		        this.changePaintOpacity(1);
+		    }
+		}
+
+
+		makeItemList () {
+		    if (this._actor) {
+
+		        this._data = this._actor.skills().filter(function(item) {
+		            return item; /* 沒有分種類, 所以直接回傳 this.inclides(item); */
+		        }, this);		       
+		    } else {
+		        this._data = [];
+		    }
+		};		
+	}
+	class Window_RabbitEquipItem extends Window_EquipItem {
+		constructor (x, y, w, h){
+			super(x, y, w, h);
+		}
+		initialize (x, y, w , h){
+			Window_EquipItem.prototype.initialize.call(this, x, y , w ,h);
+			this.opacity = 0;
+			this.open();
+		}
+
+		cursorDown (wrap) {
+			Window_EquipItem.prototype.cursorDown.call(this, wrap);
+			this.tempActorData()  
+		};
+
+		cursorUp (wrap) {
+			Window_EquipItem.prototype.cursorUp.call(this, wrap);
+			this.tempActorData()   						
+		};
+
+		cursorRight (wrap) {
+			Window_EquipItem.prototype.cursorRight.call(this, wrap);
+			this.tempActorData()   						
+
+		};
+
+		tempActorData (item){
+			item = item || this.item();
+			var actor = JsonEx.makeDeepCopy(this._actor);
+			actor.forceChangeEquip(this._slotId - 1, this.item());
+
+			this._paramWindow.setActor(this._actor);
+			this._paramWindow.setTempActor(actor, item);			
+			this._paramWindow.refresh()
+		}
+
+		cursorLeft (wrap) {
+			Window_EquipItem.prototype.cursorLeft.call(this, wrap);
+			this.tempActorData()  
+		};
+
+		realSlotId (){
+			return this._slotId - 1;
+		}
+		setSlotId (slotId) {
+
+		    if (this._slotId !== slotId) {
+		        this._slotId = slotId;
+		        this.refresh();
+		        this.resetScroll();
+		    }
+		};
+
+		setParamWindow (windows){
+			this._paramWindow = windows;
+		}
+		paramWindow (){
+			return this._paramWindow;
+		}
+		updateParam ( item , actor) {
+			let windows = this.paramWindow();
+			if (windows){
+				windows.setTempActor(actor, item);
+			}
+			
+
+		};
+		select (index){
+			Window_EquipItem.prototype.select.call(this, index);
+			this.updateParam(this.item() , this._actor);
+		}
+
+		drawItem (index) {
+		    var item = this._data[index];
+
+		    if (item) {
+		    	this.updateHelp();
+		        var numberWidth = this.numberWidth();
+		        var rect = this.itemRect(index);
+		        rect.width -= this.textPadding();
+		        this.changePaintOpacity(this.isEnabled(item));
+		        this.drawItemName(item, rect.x, rect.y, rect.width - numberWidth);
+		        this.drawItemNumber(item, rect.x, rect.y, rect.width);
+		        this.changePaintOpacity(1);
+		    }
+		};
+
+
+
+
+		makeItemList () {
+		    this._data = $gameParty.allItems().filter(function(item) {
+		        return this.includes(item);
+		    }, this);
+
+		    if (this.includes(null)) {
+		        this._data.push(null);
+		    }
+		};
+
+		includes (item) {
+
+		    if (item === null) {
+		        return true;
+
+		    }
+		    if (this.realSlotId() < 0 || item.etypeId !== this._actor.equipSlots()[this.realSlotId() - 1]) {
+
+		        return false;
+		    }
+		    return this._actor.canEquip(item);
+		};
+		realSlotId (){
+			return this._slotId;
+		}
+
+	}
+
+	class Scene_RabbitSurviva extends Scene_MenuBase {
+		constructor (){
+			super();
+		}
+		initialize (){
+			Scene_MenuBase.prototype.initialize.call(this);
+		}
+		create () {
+	    	Scene_MenuBase.prototype.create.call(this);
+
+		    this.createBalckBack();
+		    this.createSurvivaSprite()		    
+		    this.createMenuWinodw();
+		    this.createGoldWindow();
+		}
+		createGoldWindow (){
+			this._goldWindow = new Window_Gold(0, 0);
+			this._goldWindow.x = Graphics._boxWidth - this._goldWindow.width;
+			this._goldWindow.y = Graphics._boxHeight - this._goldWindow.height;
+			this._goldWindow.hide();
+
+			this.addChild(this._goldWindow);
+		}
+		createBalckBack (){
+			this._black_sp = new Sprite(new Bitmap(Graphics._boxWidth, Graphics._boxHeight));
+			this._black_sp.bitmap.fillAll('black');
+			this._black_sp.opacity = rabbit_back_opacity;
+			this.addChild(this._black_sp);
+		}
+
+		createMenuWinodw (){
+			this._menuWindow = new Window_RabbitSurviva(0, 0, Graphics._boxWidth, Graphics._boxHeight);
+			this.addChild(this._menuWindow);
+		}
+		start (){
+			Scene_MenuBase.prototype.start.call(this);
+			if ($gameSwitches.value(chimaki_need_gold)){
+				this._goldWindow.show();
+			}
+
+		}
+		update () {			
+			Scene_MenuBase.prototype.update.call(this);
+
+			if (this.isWaitImg()){
+				this.updateImageWait();
+				return;
+			}
+			else {
+				this.updateCharaImg();
+				this.waitImg($chimaki_contral.img_frame());
+			}
+
+		};	
+		waitImg  ( wait ){
+			return this._img_wait_count = wait;
+		}	
+		isWaitImg  (){
+			return this._img_wait_count > 0;
+		}	
+		updateImageWait  (){
+			if (this._img_wait_count > 0){
+				this._img_wait_count--;	
+			}
+			
+		}					
+
+		updateCharaImg  (){
+
+
+			let images = $chimaki_contral.img_group();
+			images.forEach(function (sp){
+				sp.visible = false;
+			})
+
+			if (images[this._img_index]){
+				images[this._img_index].visible = true;
+				
+			}
+
+			if (this._img_index == 0 ){
+				this._img_plus = true;
+			}
+
+			else if (this._img_index == this._img_max - 1){
+				this._img_plus = false;
+			}
+
+			if (this._img_plus){
+				this._img_index++;	
+			}
+			else {
+				this._img_index--;
+			};
+		}		
+		createSurvivaSprite (){
+			$chimaki_contral.initMamber();
+			$chimaki_contral.setVar( $gameVariables.value(chimaki_menu_img_var) );
+
+			this._spriteHash = {};
+			this._img_filed = new Sprite();
+			this._spriteHash = $chimaki_contral.createSPhash()
+
+		    for (let i in this._spriteHash){
+		    	let data = this._spriteHash[i];
+
+		    	let end = 0;
+		    	let count = 1;
+		    	let img_array = [];
+		    	while (1){		    		
+		    		let img_name = data.sp_name + '_' + count.padZero(2);
+		    		let check = $chimaki_contral.checkImage(img_name);
+		    		if (!check) break;
+
+		    		let sp = new Sprite(ImageManager.loadRabbitsurvivalCharacter(img_name));
+		    		sp.visible = false;
+		 			this._img_filed.addChild(sp);
+		 			$chimaki_contral.psuhImageName(i , sp, data.frame);
+		 			
+		 			count++;
+		    	}
+		    }	 
+
+
+			this._img_wait_count = 0;
+			this._img_index = 0;
+			this._img_max = $chimaki_contral.img_group().length;
+			this._img_plus = 1;
+		    this.addChild(this._img_filed);			
+
+		}
+	}
+
+
+
+	/*
+	* 準備call 新的Menu
+	*
+	*/
+	/* hide status */
+	rabbitsurviva.alias._menu_start = Scene_Menu.prototype.start;
+	Scene_Menu.prototype.start = function() {
+		rabbitsurviva.alias._menu_start.call(this);
+	    if (!$gameSwitches.value(chimaki_menu_switch)){
+	    	this._statusWindow.hide();	
+	    }	    
+	};
+
+	/* 要改用 layout嗎 ?*/
+	rabbitsurviva.alias._menu_create = Scene_Menu.prototype.create;
+	Scene_Menu.prototype.create = function() {
+		rabbitsurviva.alias._menu_create.call(this);
+		
+	};
+	rabbitsurviva.alias._map_callMenu = Scene_Map.prototype.callMenu;
+	Scene_Map.prototype.callMenu = function (){ 			
+		if (!$gameSwitches.value(chimaki_menu_switch)){
+			SoundManager.playOk();
+			this.callRabbitSurviva();	
+			return;
+		}
+		rabbitsurviva.alias._map_callMenu.call(this);
+
+		
+	}
+	Scene_Map.prototype.callRabbitSurviva = function (){
+		log('into callRabbitSurviva')
+		SceneManager.push(Scene_RabbitSurviva);
+	}
+
+
+
+
+	
+}());
+
+	class Sprite_ButtonMenu extends Sprite_Button {
+		constructor(){
+			super();	
+		}
+		initialize (){
+			Sprite_Button.prototype.initialize.call(this);
+			this._be_select = false;
+		}
+		updateFrame () {
+		    var frame;
+		    if (this._touching || this._be_select) {
+		        frame = this._hotFrame;
+		    } else {
+		        frame = this._coldFrame;
+		    }
+		    if (frame) {
+		        this.setFrame(frame.x, frame.y, frame.width, frame.height);
+		    }
+		};
+		setBeSelect ( touched ){
+			this._be_select = touched;
+		}	
+		isBeSelect (){
+			return this._be_select;
+		}
+	}
+
+Window_Base.prototype.setSkinNoFrame = function (){
+	this.windowskin = ImageManager.loadSystem('Window_Noframe');
+}
+Scene_Base.prototype.turnToNextMember = function (){
+	this.nextActor();
+}
+Scene_Base.prototype.createNextSprite = function (){
+	this._next_sp = new Sprite_ButtonMenu();
+	let bitmap = ImageManager.loadRabbitsurvival('Menu_Next');
+	this._next_sp.bitmap = bitmap;
+	this._next_sp.x = Graphics._boxWidth - rabbitsurviva.contst.type_x - 200 ;
+	this._next_sp.y = rabbitsurviva.contst.type_y ;
+	this._next_sp.setColdFrame(0, 0, 200,60);
+	this._next_sp.setHotFrame(0, 60, 200,60);
+	this._next_sp.visible = false;
+	this._next_sp.setClickHandler(this.turnToNextMember.bind(this));	
+	this.addChild(this._next_sp);
+
+}
+
+Scene_Base.prototype.createBackButtonSprite = function (){
+	this._back_sp_button = new Sprite_ButtonMenu();
+	let bitmap = ImageManager.loadRabbitsurvival('Icon_BACK');
+
+	this._back_sp_button.x = Graphics._boxWidth - rabbitsurviva.contst.type_x - 200 ;
+	this._back_sp_button.y = Graphics._boxHeight - rabbitsurviva.contst.type_y - 60;
+	this._back_sp_button.bitmap = bitmap;
+	this._back_sp_button.setColdFrame(0, 0, 286,60);
+	this._back_sp_button.setHotFrame(0, 60, 286,60);	
+
+	this._back_sp_button.setClickHandler(this.onTouchBack.bind(this))
+
+	this.addChild(this._back_sp_button);
+}
+Scene_Base.prototype.onTouchBack = function (){
+	SoundManager.playCancel();
+	SceneManager.pop();
+}
+Scene_Base.prototype.createTypeSprite = function (){
+	this._type_sprite = new Sprite_ButtonMenu();
+	let bitmap = ImageManager.loadRabbitsurvival('Icon_' + this.typeName());
+	this._type_sprite.x = rabbitsurviva.contst.type_x;
+	this._type_sprite.y = rabbitsurviva.contst.type_y;
+	this._type_sprite.bitmap = bitmap;
+	this._type_sprite.setColdFrame(0, 0, 286,60);
+	this._type_sprite.setHotFrame(0, 60, 286,60);
+	this.addChild(this._type_sprite);
+}
+Scene_Base.prototype.checkNextMember = function (){
+
+	if ($gameParty._actors.length >= 2){
+		this._next_sp.visible = true;
+	}	
+	else {
+		this._next_sp.visible = false;
+	}
+}
+
+
+Scene_Base.prototype.createBackGround = function (){
+	this._backgroundFiled = new Sprite();
+
+	this._black_sp = new Sprite(new Bitmap(Graphics._boxWidth, Graphics._boxHeight));
+	this._black_sp.bitmap.fillAll('black');
+	this._black_sp.opacity = rabbit_back_opacity;
+	this._backgroundFiled.addChild(this._black_sp);
+
+
+	this._back_back = new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_03'));
+	this._backgroundFiled.addChild(this._back_back);
+
+	// this._back_midden =  new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_02'));
+	// this._backgroundFiled.addChild(this._back_midden);			
+
+	this._back_up = new Sprite(ImageManager.loadRabbitsurvival('Menu_Screen_01'));
+	this._backgroundFiled.addChild(this._back_up);
+
+	this.addChildAt(this._backgroundFiled, 1);
+}
+Scene_Base.prototype.typeName = function (){ return 'SKILL'}
+
+
+
+function Game_ChimakiContral() {
     this.initialize.apply(this, arguments);
 }
 
-(function(){
-
+Game_ChimakiContral.prototype.initialize = function() {
+	this.initMamber();
 	
+};
 
-	var Chimaki_parameters = PluginManager.parameters('Chimaki_Rabbitsurviva');
-	var Chimaki_Rabbitsurviva = Imported.Chimaki_Rabbitsurviva;
-	var chimaki = Chimaki_Rabbitsurviva;
+Game_ChimakiContral.prototype.setVar = function( val) {
+	this._img_var = val;
+};
 
-	var Img = {};
-	Img.Clock = { width: 260, height: 260};
-	Img.Calendar = { width: 260, height: 260};
-	Img.PointerH = { width: 260, height: 260};
-	Img.PointerS = { width: 260,height: 260}
-	Img.Heart = { width: 136, height: 126};
-	Img.Book = {width: 1280 , height: 720}
-	Img.Day = {width: 38 , height: 52 , num: 13}
-	Img.Num = {blt : 38} ;
+Game_ChimakiContral.prototype.initMamber = function (){
+	this._updateImg = {};	
+	this._img_var = 0;
+	this._countData = {};
+}
 
+Game_ChimakiContral.prototype.createSPhash = function (){
+	this._spriteHash = {};
+	for (let i in chimaki_menu_img_data){
 
- 	chimaki.layout1 = 1;
- 	chimaki.layout2 = 2;
- 	chimaki.layout3 = 3;
-	chimaki.timerVarH = Math.floor(Chimaki_parameters['TimerHoru'] || 90); 
-	chimaki.timerVarS = Math.floor(Chimaki_parameters['TimerSceond'] || 89); 
-	chimaki.dayVar = Math.floor(Chimaki_parameters['DayVar'] || 88); 
-	chimaki.all_switch = Math.floor(Chimaki_parameters['MenuSwitch'] || 90); 
-	
-	chimaki.daySwitch = Math.floor(Chimaki_parameters['DaySwitch'] || 88);
-	chimaki.clockSwitch = Math.floor(Chimaki_parameters['ClockSwitch'] || 87); 
+		let str = chimaki_menu_img_data[i].replace('[','');
+		str = str.replace(']','');
+		let array = str.split(',');
 
-	chimaki.book_ui = Math.floor(Chimaki_parameters['BookUISwitch']|| 89);	
-
-	var timerVar = chimaki.timerVar = Math.floor(Chimaki_parameters['TimerVar'] || 87);
-	var timerVarTemp = chimaki.timerVarTemp = Math.floor(Chimaki_parameters['TimerVarTemp'] || 86);
-	var h1 = chimaki.heart_01 = Chimaki_parameters["Heart_01"].split(";") ;
-	var h2 = chimaki.heart_02 = Chimaki_parameters["Heart_02"].split(";") ;
-	var h3 = chimaki.heart_03 = Chimaki_parameters["Heart_03"].split(";") ;
-	var heartOffset = Chimaki_parameters["offsetXY"].split(";") ;
-	var offsetNumXY = Chimaki_parameters["offsetNumXY"].split(";") ;
-
-	for (var i in heartOffset){
-		heartOffset[i] =  Number(heartOffset[i]) ;
-	}
-	for (var i in offsetNumXY){
-		offsetNumXY = Number(offsetNumXY[i]);
-	}
-
-	chimaki.dayoffset = Chimaki_parameters['DayOffset'].split(";");
-
-	var fristFlag = false;
-
-	var day_offsetX = 70;
-	var day_offsetY = 100;
-
-	var temp_switch = false;
-
-//=============================================================================
-// Timer for surviva
-//=============================================================================
-
-
-	Game_SurTimer.prototype.initialize = function(startTime) {
-	    this._frames = 0;
-	    this._working = false;
-	};
-
-	Game_SurTimer.prototype.update = function() { // 開始計算時間
-	    if (this.isWorking()) {
-	        this._frames++;
-
-	    }
-	    if (this._frames >= 43200){
-	    	this._frames = 0 ;
-	    	var num = $gameVariables.value(chimaki.dayVar) + 1;
-	    	$gameVariables.setValue(chimaki.dayVar,num);
-	    }
-
-	};
-
-	Game_SurTimer.prototype.reset = function() { // 開始計算時間
-		this._frames = 0;
-	};
-
-	Game_SurTimer.prototype.start = function(count) {		
-	    this._frames = count || 0;
-	    this._working = true;
-	};
-
-	Game_SurTimer.prototype.setTimer = function(count){
-		this._frames = count;
-		this._working = true;
-	}
-
-	Game_SurTimer.prototype.stop = function() {
-	    this._working = false;
-	    return this._frames;
-	};
-
-	Game_SurTimer.prototype.isWorking = function() {
-	    return this._working;
-	};
-
-	Game_SurTimer.prototype.seconds = function() {
-	    return Math.floor(this._frames / 60);
-	};
-	Game_SurTimer.prototype.addMin = function(num){
-		num *= 60;
-		this._frames += num;
-		return this._frames;
-	}
-	Game_SurTimer.prototype.addHour = function(num){
-		num *= 3600;
-		this._frames += num;
-		return this._frames;
+		let number = array[0];
+		let sp_name = array[1]
+		let frame = array[2] || 5;
+		this._spriteHash[number] = { number : number , sp_name : sp_name , frame : frame};
 	}	
+	return this._spriteHash;
+}
 
 
-//=============================================================================
-// plugin command
-//=============================================================================	
+Game_ChimakiContral.prototype.psuhImageName = function( var_index , sp, frame) {
 
-	var $gameSurTime = new Game_SurTimer();	
+	this._updateImg[var_index] = this._updateImg[var_index] || [];
+	this._updateImg[var_index].push(sp);
+	this._countData[var_index] = this._countData[var_index] || [];
+	this._countData[var_index].push(frame);
 
-	var chimaki_rabbitsurviva_plugincommand = Game_Interpreter.prototype.pluginCommand;        
-	Game_Interpreter.prototype.pluginCommand = function(command, args) {
-    	chimaki_rabbitsurviva_plugincommand.call(this, command, args);
-    	if (command === 'Surviva') {
-    		switch (args[0]){
-    			case 'start':
-    				$gameSurTime.start($gameVariables.value(timerVarTemp));
-    				break;    				
-    			case 'stop':
-    				$gameVariables.setValue(timerVarTemp ,$gameSurTime.stop()); 
-    				break;    				
-    			case 'reset':
-    				$gameSurTime.reset();
-    				$gameVariables.setValue(timerVarTemp ,0); 
-    				break;    			
-    			case 'addMin':
-    				$gameVariables.setValue(timerVarTemp ,$gameSurTime.addMin(args[1])); 
-					break;    			
-    			case 'addHour':
-    				$gameVariables.setValue(timerVarTemp ,$gameSurTime.addHour(args[1])); 
-					break;    			
-
-    		}
-    	}
-    }
-    
-//=============================================================================
-// base timer
-//=============================================================================	
-
-	Scene_Base.prototype.update = function() {
-		$gameSurTime.update();
-	    this.updateFade();
-	    this.updateChildren();
-	    AudioManager.checkErrors();
-	};
-//=============================================================================
-// Scene_map調整
-//=============================================================================	
-	var SceneUI = Scene_Map.prototype;
-	var chimaki_ui_init = SceneUI.initialize;
-	Scene_Map.prototype.initialize = function(){
-		chimaki_ui_init.call(this);
-		this._lastH1Num = $gameVariables.value(h1[2]);
-		this._lastAllSwitch = $gameSwitches.value(chimaki.all_switch);
-
-	}
+};
 
 
-	Scene_Map.prototype.allSubSprite = function (){
-		if ($gameSwitches.value(chimaki.all_switch)){
-			this._spriteset.allSubSp().forEach(function (sp ){
-				log('GGGGGG')
-				if (sp && !sp.visible){
-					sp.visible = true;
-				}
-			});
-			this._spriteset.allArrSp().forEach(function (sps ){
-				for (var i = 0; i < sps.length;i++){
-					var sp = sps[i];
-					if (sp && !sp.visible){
-						sp.visible = true;
-					}					
-				}
-			});
+Game_ChimakiContral.prototype.checkImage = function ( name ){
+		var fs = require('fs');
+		var path = require('path');
+	    var base = path.dirname(process.mainModule.filename);		
+	    var url = base + '/img/Rabbitsurviva/Character/' + name +'.png';
+		try{
+			fs.statSync(url);
+		}catch(e){
+			return false;
 		}
 
-		else {
+		return true;
+}
 
-			this._spriteset.allSubSp().forEach(function (sp ){
-				log('YYYYYYY')
-				if (sp && sp.visible){
-					sp.visible = false;
-				}
-			});
-			this._spriteset.allArrSp().forEach(function (sps ){
-				for (var i = 0; i < sps.length;i++){
-					var sp = sps[i];
-					if (sp && sp.visible){
-						sp.visible = false;
-					}					
-				}
-			});
-		}
+Game_ChimakiContral.prototype.img_group = function() {
+	// this._img_var = this._img_var || 1;
+	if (this._updateImg[this._img_var]){
+		return this._updateImg[this._img_var];	
 	}	
+	return [];
+}
 
-
-	var chimaki_ui_start = Scene_Map.prototype.start;	
-	Scene_Map.prototype.start = function(){		
-		// this.checkallsp();
-
-		chimaki_ui_start.call(this);	
-		this._spriteset.refreshHeartNum();		
-		this.allSubSprite();
-	// SpriteSurViva.allSubSp = function (){
-	// 	return [this._heart_01, this._heart_02, this._heart_03, this._pointerH, this._pointerS, this._calendar]
-	// }
-
-	// SpriteSurViva.allArrSp = function (){
-	// 	return  [this._days , this._hearts];
-	// }
-
-		
-
-	}
-	Scene_Map.prototype.checkAll = function (){
-			this._spriteset.refreshH1();
-			this._spriteset.refreshH2();
-			this._spriteset.refreshH3();
-
-			this._spriteset._lastDay = $gameVariables.value(chimaki.dayVar) || 0;
-			this._spriteset.refreshCalendar();
-			this._spriteset.refreshDay();
-			this._spriteset.refreshTimer();
-			this._spriteset.refreshHeartNum();	
-	}
-	var chimaki_ui_stop = Scene_Map.prototype.stop;
-	Scene_Map.prototype.stop = function(){
-		chimaki_ui_stop.call(this);
-		$gameVariables.setValue(chimaki.timerVarH , this._spriteset._pointerH.rotation);
-		$gameVariables.setValue(chimaki.timerVarS , this._spriteset._pointerS.rotation);
+Game_ChimakiContral.prototype.img_frame = function() {
+	if (this._countData[this._img_var]){
+		return Number(this._countData[this._img_var][0]);	
 	}	
-	
-	var chimaki_ui_update = Scene_Map.prototype.update;
-	Scene_Map.prototype.update = function(){		
-		this._spriteset.refreshDay();				
-		chimaki_ui_update.call(this);
-		if (!fristFlag){
-			// this._spriteset.refreshHeartNum();
-			this.checkAll();
-			fristFlag = true;
-
-		}		
-		if (this._lastH1Num != $gameVariables.value(h1[2])){
-			this._lastH1Num = $gameVariables.value(h1[2]);
-			this._spriteset.refreshHeartNum();
-		}
-
-		if (this._lastAllSwitch != $gameSwitches.value(chimaki.all_switch)){
-			this._lastAllSwitch = $gameSwitches.value(chimaki.all_switch)
-			this.allSubSprite();
-		}
-
-	}
-//=============================================================================
-// call menu 還用不到
-//=============================================================================	
-	// var chimaki_scene_callUI = SceneUI.callMenu;
-	// SceneUI.callMenu = function(){
-	// 	if ($gameSwitches.value(chimaki.book_ui)){
-	// 		SceneManager.push(Scene_MenuSurviva);
-	// 	};
-	// 	chimaki_scene_callUI.call(this);
-	// }
-
-
-//=============================================================================
-// 為了改變圖層 改用sprite set
-//=============================================================================	
-
-
-	var SpriteSurViva = Spriteset_Map.prototype;
-	var chimaki_init = Spriteset_Base.prototype.initialize;
-	Spriteset_Map.prototype.initialize = function() {
-		this._subHeart = [];
-		this.initSurviva();
-	    this.initHearts();
-	    chimaki_init.call(this);
-		this.createSurvivaUi();
-		
-	}
-//=============================================================================
-// 初始化區塊
-//=============================================================================	
-	Spriteset_Map.prototype.initSurviva = function(){
-		this._lastTimerSecond = -1;
-		var num = $gameVariables.value(chimaki.dayVar)
-		this.setDayNum(num);
-		this._daySwitch = null;
-		this._LastHeartSwitch_01 = null;
-		this._LastHeartSwitch_02 = null;
-		this._LastHeartSwitch_03 = null;
-	}
-//=============================================================================
-// 初始化愛心參數
-//=============================================================================		
-	Spriteset_Map.prototype.initHearts = function(){
-		// h1
-		this._h1Value = {};
-		this._h1Value.last = $gameVariables.value(h1[4]);
-		$gameVariables.setValue(h1[2], this._h1Value.last);		
-		// h2
-		this._h2Value = {};
-		this._h2Value.last = $gameVariables.value(h2[4]);
-		$gameVariables.setValue(h2[2], this._h2Value.last);				
-		// h3
-		this._h3Value = {};
-		this._h3Value.last = $gameVariables.value(h3[4]);
-		$gameVariables.setValue(h3[2], this._h3Value.last);				
-		
-	}	
-
-//=============================================================================
-// 初始化日期參數
-//=============================================================================		
-	Spriteset_Map.prototype.setDayNum = function(num){
-		var num = num || this._lastDay ;
-		this._days = [0, 1, 2];
-		this._days[0] = Math.floor(num / 100) || 0;
-		this._days[1] = Math.floor((num /10 ) % 10) || 0;
-		this._days[2] = num % 10 || 0;
-	}	
-//=============================================================================
-// 建立圖片區塊
-//=============================================================================			
-	Spriteset_Map.prototype.createSurvivaUi = function(){
-
-		this.createCalendar();
-		this.createDay();
-		this.createClock();
-		this.createClockPointerH()
-		this.createClockPointerS()
-		this.createHeart();
-		this.createHeartVar1();
-		this.createHeartVar2();
-		this.createHeartVar3();
-		this.createAllHeartNum();
-		
-	}
-	Spriteset_Map.prototype.createAllHeartNum = function (){
-		this.createHeartNum1();	
-	}
-	
-
-	Spriteset_Map.prototype.subHerartNum = function(){
-		return [this._heart_02,this._heart_03];
-	}
-//=============================================================================
-// 建立圖片日期
-//=============================================================================		
-	Spriteset_Map.prototype.createDay = function(){
-		this._day = [0,1,2];
-		for (var i = 0; i < this._day.length; i++){
-			this._day[i] = new Sprite();
-			this._day[i].bitmap = ImageManager.loadRabbitsurvival("Digital");
-			this._day[i].x = day_offsetX + i * Img.Day.width + Math.floor(chimaki.dayoffset[0]);
-			this._day[i].y = day_offsetY + Math.floor(chimaki.dayoffset[1]);
-			this._day[i].setFrame(0 + this._days[i] * Img.Day.width , 0, Img.Day.width ,Img.Day.height);
-			this.addChildAt(this._day[i],chimaki.layout2);			
-			if ($gameSwitches.value(chimaki.daySwitch)){
-				this._day[i].visible = false;
-			}
-		}
-	}
-//=============================================================================
-// 建立愛心底圖
-//=============================================================================			
-	SpriteSurViva.createHeart = function(){
-		this._hearts = [0, 1, 2];
-
-		for (var i = 0; i < this._hearts.length; i++){
-			var H;
-			this._hearts[i] = new Sprite();
-			this._hearts[i].bitmap = ImageManager.loadRabbitsurvival("Heart_01");
-			this._hearts[i].x = (Graphics._boxWidth - Img.Heart.width * (i + 1)) ;
-			this._hearts[i].x += heartOffset[0];
-			this._hearts[i].y += heartOffset[1];
-
-
-			if (i == 0){
-				H = h1;
-			}
-			else if (i == 1){
-				H = h2;
-			}
-			else if (i == 2){
-				H = h3;
-			}
-
-
-			// if ($gameSwitches.value(H[i])){
-			this.addChildAt(this._hearts[i], 1);	
-			// }
-			
-		}
-
-	}		
-//=============================================================================
-// 建立愛心
-//=============================================================================			
-
-	SpriteSurViva.createHeartVar2 = function(){
-		this._heart_02 = new Sprite();
-		this._heart_02.bitmap = ImageManager.loadRabbitsurvival("Content_02");
-		this._heart_02.x = this._hearts[1].x + heartOffset[0];
-		if ($gameSwitches.value(h2[0])){
-			this.addChildAt(this._heart_02,chimaki.layout3);		
-			if ($gameVariables.value(h2[2]) < 0) $gameVariables.setValue(h2[2] , 0); 
-			if ($gameVariables.value(h2[2]) > 100) $gameVariables.setValue(h2[2] , 100);
-			this.refreshH2();
-		}
-
-	}
-	SpriteSurViva.createHeartVar3 = function(){
-		this._heart_03 = new Sprite();
-		this._heart_03.bitmap = ImageManager.loadRabbitsurvival("Content_03");
-		this._heart_03.x = this._hearts[2].x + heartOffset[0];
-		if ($gameSwitches.value(h3[0])){
-			this.addChildAt(this._heart_03,chimaki.layout3);
-			if ($gameVariables.value(h3[2]) < 0) $gameVariables.setValue(h3[2] , 0); 
-			if ($gameVariables.value(h3[2]) > 100) $gameVariables.setValue(h3[2] , 100);
-			this.refreshH3();			
-		}
-
-	}			
-//=============================================================================
-// 建立日期底圖
-//=============================================================================			
-	SpriteSurViva.createCalendar = function(){
-		this._calendar = new Sprite();
-		this._calendar.bitmap = ImageManager.loadRabbitsurvival("Calendar");		
-		this._calendar.x = 0 + Math.floor(chimaki.dayoffset[0]);
-		this._calendar.y = 0 + Math.floor(chimaki.dayoffset[1]);
-		this.addChildAt(this._calendar, chimaki.layout1);
-
-	}
-//=============================================================================
-// 時鐘底圖
-//=============================================================================				
-
-	SpriteSurViva.createClock = function(){
-		this._clock = new Sprite();
-		this._clock.bitmap = ImageManager.loadRabbitsurvival("Clock");
-		this._clock.x = this._calendar.x;
-		this._clock.y = this._calendar.y + Img.Clock.height;
-		if ($gameSwitches.value(chimaki.clockSwitch)){
-			this.addChildAt(this._clock,chimaki.layout1);	
-		}
-		
-	}
-//=============================================================================
-// 時針
-//=============================================================================					
-	SpriteSurViva.createClockPointerH = function(){
-		this._pointerH = new Sprite();
-		this._pointerH.bitmap = ImageManager.loadRabbitsurvival("Pointer_02");
-		this._pointerH.x = Img.PointerH.width /2 ;
-		this._pointerH.y = this._clock.y + Img.PointerH.height / 2 ;		
-		this._pointerH.anchor.x = 0.5;
-		this._pointerH.anchor.y = 0.5;
-		this._pointerH.rotation = $gameVariables.value(chimaki.timerVarH) || 0;
-		if ($gameSwitches.value(chimaki.clockSwitch)){
-			this.addChildAt(this._pointerH,chimaki.layout2);
-		}
-	}	
-//=============================================================================
-// 分針
-//=============================================================================						
-	SpriteSurViva.createClockPointerS = function(){
-		var offsetY = 114;
-		var offsetX = 0;
-		this._pointerS = new Sprite();
-		this._pointerS.bitmap = ImageManager.loadRabbitsurvival("Pointer_01");
-		this._pointerS.x = Img.PointerS.width / 2 ;
-		this._pointerS.y = this._clock.y + Img.PointerS.height / 2 ;
-		this._pointerS.anchor.x = 0.5;
-		this._pointerS.anchor.y = 0.5;
-		this._pointerS.rotation = $gameVariables.value(chimaki.timerVarS) || 0;		
-		if ($gameSwitches.value(chimaki.clockSwitch)){
-			this.addChildAt(this._pointerS,chimaki.layout2);
-		}
-		this.refreshTimer();
-
-	}
-//=============================================================================
-// 刷新區塊
-//=============================================================================					
-//=============================================================================
-// 刷新時針指針
-//=============================================================================
-	var chimaki_sprite_update = SpriteSurViva.update;
-	SpriteSurViva.update = function(){
-		chimaki_sprite_update.call(this);
-		this.updateSurviva();
-
-
-	}
-	SpriteSurViva.updateSurviva = function(){
-		this.updateTimer();
-		this.updateHearts();
-		this.updateSurDay();
-
-	}
-		// this._daySwitch = false;
-		// this._HeartSwitch_01 = false;	
-	SpriteSurViva.updateSurDay = function(){
-		if (this._calendar ){
-			if (this._daySwitch != $gameSwitches.value(chimaki.daySwitch)) {
-				if ($gameSwitches.value(chimaki.daySwitch)){
-					this._calendar.visible = true;
-					for (var i = 0; i < this._day.length; i++){
-						 this._day[i].visible = true;
-					}
-				}
-				else if (!$gameSwitches.value(chimaki.daySwitch)){
-					this._calendar.visible = false;	
-					for (var i = 0; i < this._day.length; i++){
-						 this._day[i].visible = false;
-					}				
-				}
-				this._daySwitch = $gameSwitches.value(chimaki.daySwitch);
-			}
-		}
-	}	
-
-	SpriteSurViva.updateTimer = function(){
-		//先處理timer 再調整show 圖
-		if (this._lastTimerSecond != $gameSurTime.seconds()){
-			this.refreshTimer();
-		}
-	}
-		// this._LastHeartSwitch_01 = false;
-		// this._LastHeartSwitch_02 = false;
-		// this._LastHeartSwitch_03 = false;
-
-	SpriteSurViva.updateHearts = function(){
-		// 圖片顯示部份
-
-
-
-		if (this._heart_01 && this._LastHeartSwitch_01 != $gameSwitches.value(h1[0])){
-			if ($gameSwitches.value(h1[0])){
-				this._heart_01.visible = true;
-				this._hearts[0].visible = true;
-				
-			}
-			else if (!$gameSwitches.value(h1[0])){
-				this._heart_01.visible = false;
-				this._hearts[0].visible = false;				
-				this._heart_01_num.visible = false;
-			}
-			this._LastHeartSwitch_01 = $gameSwitches.value(h1[0]);
-		}
-
-
-		if (this._heart_02 && this._LastHeartSwitch_02 != $gameSwitches.value(h2[0])){
-			if ($gameSwitches.value(h2[0])){
-				this._heart_02.visible = true;
-				this._hearts[1].visible = true;
-				
-			}
-			else if (!$gameSwitches.value(h2[0])){
-				this._heart_02.visible = false;
-				this._hearts[1].visible = false;				
-			}
-			this._LastHeartSwitch_02 = $gameSwitches.value(h2[0]);
-		}
-
-		if (this._heart_03 && this._LastHeartSwitch_03 != $gameSwitches.value(h3[0])){
-			if ($gameSwitches.value(h3[0])){
-				this._heart_03.visible = true;
-				this._hearts[2].visible = true;
-				
-			}
-			else if (!$gameSwitches.value(h3[0])){
-				this._heart_03.visible = false;
-				this._hearts[2].visible = false;				
-			}
-			this._LastHeartSwitch_03 = $gameSwitches.value(h3[0]);
-		}
-
-
-		// 數字改變顯示部分
-		if(this._h1Value.last != $gameVariables.value(h1[2])){
-			
-			if ($gameVariables.value(h1[2]) < 0) $gameVariables.setValue(h1[2] , 0); 
-			if ($gameVariables.value(h1[2]) > 100) $gameVariables.setValue(h1[2] , 100);
-			this.refreshH1();	
-
-			this._h1Value.last = $gameVariables.value(h1[2]);
-			$gameVariables.setValue(h1[4],this._h1Value.last); //刷新外層紀錄
-		}
-		if(this._h2Value.last != $gameVariables.value(h2[2])){
-			if ($gameVariables.value(h2[2]) < 0) $gameVariables.setValue(h2[2] , 0); 
-			if ($gameVariables.value(h2[2]) > 100) $gameVariables.setValue(h2[2] , 100); 
-			this.refreshH2();	
-			this._h2Value.last = $gameVariables.value(h2[2]);
-			$gameVariables.setValue(h2[4],this._h2Value.last); //刷新外層紀錄
-		}		
-		if(this._h3Value.last != $gameVariables.value(h3[2])){
-			if ($gameVariables.value(h3[2]) < 0) $gameVariables.setValue(h3[2] , 0); 
-			if ($gameVariables.value(h3[2]) > 100) $gameVariables.setValue(h3[2] , 100); 
-		 	this.refreshH3();	
-		 	this._h3Value.last = $gameVariables.value(h3[2]);
-		 	$gameVariables.setValue(h3[4],this._h3Value.last); //刷新外層紀錄
-		}				
-	}
-//=============================================================================
-// 我的一顆心相關刷新
-//=============================================================================	
-	SpriteSurViva.refreshTimer = function(){
-		if (this._pointerS && this._pointerH){
-			this._pointerS.rotation = ($gameSurTime.seconds() % 60) * 0.105;
-			this._pointerH.rotation = $gameSurTime.seconds() * 0.105 / 12 ;
-			this._lastTimerSecond = $gameSurTime.seconds()
-		}
-	}
-	SpriteSurViva.refreshCalendar = function(){
-		this._calendar.x = 0 + Math.floor(chimaki.dayoffset[0]);
-		this._calendar.y = 0 + Math.floor(chimaki.dayoffset[1]);
-	}
-
-	SpriteSurViva.refreshDay = function(){
-		if (this._lastDay != $gameVariables.value(chimaki.dayVar)){
-			this.setDayNum($gameVariables.value(chimaki.dayVar));
-			for (var i = 0; i < this._day.length; i++){
-				this._day[i].x = day_offsetX + i * Img.Day.width + Math.floor(chimaki.dayoffset[0]);
-				this._day[i].y = day_offsetY + Math.floor(chimaki.dayoffset[1]); 
-				this._day[i].setFrame(0 + this._days[i] * Img.Day.width , 0, Img.Day.width ,Img.Day.height);
-			}			
-			this._lastDay = $gameVariables.value(chimaki.dayVar);
-		}
-	}
-
-
-	SpriteSurViva.refreshH2 = function(){				
-		var tmp = (h2[3] - $gameVariables.value(h2[2])) || 0;
-		var offset = tmp / h2[3];
-		offset *= Img.Heart.height;
-		this.refreshHeart(this._heart_02, offset);
-	}	
-
-	SpriteSurViva.refreshH3 = function(){		
-		var tmp = (h3[3] - $gameVariables.value(h3[2])) || 0;
-		var offset = tmp / h3[3];
-		offset *= Img.Heart.height;
-		this.refreshHeart(this._heart_03, offset);
-	}	
-
-	SpriteSurViva.refreshHeart = function(sprite , offset , x, y, width, height){
-		var w = width || Img.Heart.width;
-		var h = height || Img.Heart.height;
-		var x = sprite.x;
-		var y = sprite.y;
-
-		sprite.y = offset ;
-		sprite.y += heartOffset[1];
-		sprite.setFrame( 0, offset, w, h);
-	}
-
-
-
-	SpriteSurViva.refreshH1 = function(){
-		if ($gameSwitches.value(h1[0])){
-			this._heart_01.visible = true;
-		}
-		else {
-			this._heart_01.visible = false;	
-		}
-
-		var tmp = (h1[3] - $gameVariables.value(h1[2]));
-		var offset = tmp / h1[3];
-		offset *= Img.Heart.height; 
-		$gameVariables.value(h1[2])
-		
-		this.refreshHeart(this._heart_01, offset);
-		
-	}	
-	SpriteSurViva.createHeartVar1 = function(){
-		this._heart_01 = new Sprite(ImageManager.loadRabbitsurvival("Content_01"));
-		this._heart_01.x = this._hearts[0].x ;
-		this._heart_01.y = this._hearts[0].y + heartOffset[1];
-		this.addChildAt(this._heart_01,chimaki.layout3);
-
-		if ($gameVariables.value(h1[2]) < 0) $gameVariables.setValue(h1[2] , 0); 
-		if ($gameVariables.value(h1[2]) > 100) $gameVariables.setValue(h1[2] , 100);
-		this._heart_01.visible = false;
-		this.refreshH1();
-	}	
-
-
-	SpriteSurViva.createHeartNum1 = function (){
-		var list = [0, 1, 2];
-		this._heart_01_num = new Sprite();
-		this._heart_01_num.x = this._hearts[0].x;
-		this._heart_01_num.y = this._hearts[0].y + heartOffset[1];
-
-		for (var i = 0; i < list.length; i ++){
-			var sp = new Sprite(ImageManager.loadRabbitsurvival("Digital"));
-			sp.x += Img.Heart.width / 2 - Img.Day.width /2
-			sp.y = this._hearts[0].y;
-			sp.setFrame(0, 0, Img.Day.width ,Img.Day.height);
-			sp.visible = false;
-			this._heart_01_num.addChild(sp);
-		}		
-		
-		this.addChildAt(this._heart_01_num, chimaki.layout2 + 3);
-	}
-	SpriteSurViva.allSubSp = function (){
-		return [this._heart_01, this._heart_02, this._heart_03, this._pointerH, this._pointerS, this._calendar, this._heart_01_num]
-	}
-
-	SpriteSurViva.allArrSp = function (){
-		return  [this._days , this._hearts, this._day, this._heart_01_num];
-	}
-
-	SpriteSurViva.refreshHeartNum = function (){
-		this.closeNum()
-		var num = ($gameVariables.value(h1[2]) + "").split("");
-		var len = num.length;
-		var m = len + 2;
-		var offetX = 4;
-		var offsetY = -4;
-		
-		for (var i = 0; i < len; i++){
-
-			if (len == 1){
-				var s = this._heart_01_num.children[i];
-				s.x = Math.floor(  Img.Heart.width / m +  i *  Img.Day.width / 2  + offetX) ;				
-				s.y = Img.Heart.height / 2 - Img.Day.height / 2 - heartOffset[1] / 2 + offsetY;
-				s.visible = true;
-				this.setHeartNumFrame(s, num[i]);				
-			}
-
-			if (len == 2){
-				var s = this._heart_01_num.children[i];
-				s.x = Math.floor(  Img.Heart.width / m +  i *  Img.Day.width / 2  + offetX);
-				s.y = Img.Heart.height / 2 - Img.Day.height / 2 - heartOffset[1] / 2 + offsetY;
-				s.visible = true;
-				this.setHeartNumFrame(s, num[i]);
-			}
-			if (len == 3){
-				var s = this._heart_01_num.children[i];
-				s.x = Math.floor(  Img.Heart.width / m +  i *  Img.Day.width / 2  + offetX);				
-				s.y = Img.Heart.height / 2 - Img.Day.height / 2 - heartOffset[1] / 2 + offsetY;
-				s.visible = true;
-				this.setHeartNumFrame(s, num[i]);				
-			}
-		}
-	}
-	SpriteSurViva.closeNum = function (sp){
-		this._heart_01_num.children.forEach(function (sp){
-			sp.visible = false;
-		});
-	}
-
-
-	SpriteSurViva.setHeartNumFrame = function (sprite, num ){
-		var number = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-		for (index in number){
-			if (num == number[index]){
-				sprite.setFrame( index * Img.Day.width  , 0 , Img.Day.width , Img.Day.height)
-			}
-		}									
-	}
-
-	SpriteSurViva.updateAllSurUI = function(){
-
-	}
-
-//=============================================================================
-// Scene_Menu
-//=============================================================================	
-	function Scene_MenuSurviva(){
-		this.initialize.apply(this, arguments);
-	}
-	Scene_MenuSurviva.prototype = Object.create(Scene_MenuBase.prototype);
-	Scene_MenuSurviva.prototype.constructor = Scene_MenuSurviva;	
-
-
-	var MenuSurviva = Scene_MenuSurviva.prototype;
-	MenuSurviva.initialize = function(){
-		Scene_MenuBase.prototype.initialize.call(this);
-	}
-	MenuSurviva.create = function() {
-	    Scene_MenuBase.prototype.create.call(this);
-	    this.createBookBackground();
-
-	};	
-	MenuSurviva.createBookBackground = function(){
-		this._book = new Sprite();
-		this._book.bitmap = ImageManager.loadRabbitsurvival('Menu_01');
-		this._book.x = Graphics._boxWidth;
-		this.addChild(this._book);
-		// this._book.x = 
-	}
-	MenuSurviva.updateBook = function(){
-		if (this._book.x > 0){
-			this._book.x -= 250;
-			if (this._book.x < 0){
-				this._book.x = 0;
-			}
-		}		
-	}
-	MenuSurviva.update = function(){
-		this.updateBook();
-	}
-	DataManager.makeSaveContents = function() {
-	    // A save data does not contain $gameTemp, $gameMessage, and $gameTroop.
-	    var contents = {};
-	    contents.system       = $gameSystem;
-	    contents.screen       = $gameScreen;
-	    contents.timer        = $gameTimer;
-	    contents.switches     = $gameSwitches;
-	    contents.variables    = $gameVariables;
-	    contents.selfSwitches = $gameSelfSwitches;
-	    contents.actors       = $gameActors;
-	    contents.party        = $gameParty;
-	    contents.map          = $gameMap;
-	    contents.player       = $gamePlayer;
-	    contents.surTimer     = $gameSurTime;
-	    return contents;
-	};
-
-	DataManager.extractSaveContents = function(contents) {
-	    $gameSystem        = contents.system;
-	    $gameScreen        = contents.screen;
-	    $gameTimer         = contents.timer;
-	    $gameSwitches      = contents.switches;
-	    $gameVariables     = contents.variables;
-	    $gameSelfSwitches  = contents.selfSwitches;
-	    $gameActors        = contents.actors;
-	    $gameParty         = contents.party;
-	    $gameMap           = contents.map;
-	    $gamePlayer        = contents.player;
-	    $gameSurTime       = contents.surTimer; // 必要,紀錄 timer 狀態
-	};
-}());
+}
+
+Game_ChimakiContral.prototype.openSurvivaMenu = function() {
+	return $gameSwitches.value(chimaki_menu_switch);    
+};
+var $chimaki_contral = new Game_ChimakiContral();

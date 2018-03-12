@@ -54,7 +54,7 @@ ConfigManager.title = "title";
 
 function log (str){	
 	// if (logSwitch){
-		// console.log(str);	
+		console.log(str);	
 	// }
 	
 }
@@ -557,5 +557,26 @@ Game_Player.prototype.isDashButtonPressed = function() {
         return shift;
     }
 };
+
+
+
+
+
+
+class Window_CatMenu extends Window_MenuActor{
+	constructor (){
+		super();
+	}
+	initialize (){
+		Window_MenuActor.prototype.initialize.call(this);
+	}
+
+}
+
+
+
+
+
+
 
 initDataContent();
